@@ -133,41 +133,20 @@
                     </button>
                 </div>
 
-                <div id="host-info" class="hidden mt-4 p-4 bg-zinc-900/80 border border-blue-500/30 rounded-xl text-center relative overflow-hidden">
+                <div id="host-info" class="hidden mt-4 p-3 bg-zinc-900/80 border border-blue-500/30 rounded-xl text-center">
                     <p class="text-[10px] text-gray-400 mb-1">あなたの招待コード</p>
-                    <div class="flex items-center justify-center gap-2 mb-3">
-                        <span id="my-peer-id" class="text-xl sm:text-2xl font-mono font-bold text-blue-300 tracking-wider">------</span>
-                        <button onclick="copyPeerId()" class="text-gray-400 hover:text-white transition"><i class="fa-regular fa-copy text-lg"></i></button>
+                    <div class="flex items-center justify-center gap-2">
+                        <span id="my-peer-id" class="text-sm font-mono font-bold text-blue-300 tracking-wider">------</span>
+                        <button onclick="copyPeerId()" class="text-gray-400 hover:text-white transition"><i class="fa-regular fa-copy"></i></button>
                     </div>
-                    
-                    <div class="bg-black/40 rounded-lg p-2 mb-3 text-left">
-                        <p class="text-xs text-blue-300 font-bold mb-1 border-b border-blue-500/30 pb-1">参加者 (<span id="host-player-count">1 / 4</span>)</p>
-                        <ul id="host-players-list" class="space-y-1 text-sm text-white">
-                            <!-- Dynamically populated -->
-                        </ul>
-                    </div>
-
-                    <p class="text-[10px] text-yellow-400 mt-2 mb-3 animate-pulse" id="host-status-msg">対戦相手を待機中...</p>
-                    <button id="start-online-btn" onclick="startGameOnline()" disabled class="w-full px-3 py-3 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white font-black rounded-xl text-xs transition shadow-md border-b-4 border-blue-900 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <i class="fa-solid fa-play mr-1"></i> 参加者でゲーム開始
-                    </button>
+                    <p class="text-[10px] text-yellow-400 mt-2 animate-pulse" id="host-status-msg">対戦相手を待機中...</p>
                 </div>
 
-                <div id="join-info" class="hidden mt-4 space-y-3">
-                    <div class="flex gap-2">
-                        <input type="text" id="input-join-id" placeholder="招待コード4桁" class="w-full bg-zinc-900 border border-purple-600/50 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-400 text-sm font-mono tracking-wider">
-                        <button onclick="joinOnlineGame()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs transition whitespace-nowrap">
-                            接続
-                        </button>
-                    </div>
-
-                    <div id="join-lobby-view" class="hidden bg-black/40 rounded-lg p-2 text-left border border-purple-500/30">
-                        <p class="text-xs text-purple-300 font-bold mb-1 border-b border-purple-500/30 pb-1">参加者 (<span id="join-player-count">1 / 4</span>)</p>
-                        <ul id="join-players-list" class="space-y-1 text-sm text-white">
-                            <!-- Dynamically populated -->
-                        </ul>
-                    </div>
-
+                <div id="join-info" class="hidden mt-4 space-y-2">
+                    <input type="text" id="input-join-id" placeholder="招待コードを入力" class="w-full bg-zinc-900 border border-purple-600/50 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-400 text-xs font-mono">
+                    <button onclick="joinOnlineGame()" class="w-full px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs transition">
+                        接続する
+                    </button>
                     <p class="text-[10px] text-center text-yellow-400 mt-1" id="join-status-msg"></p>
                 </div>
             </div>
@@ -205,8 +184,30 @@
             </div>
 
             <!-- Players -->
-            <div id="players-container" class="flex flex-wrap justify-center gap-4">
-                <!-- Dynamically populated by JS -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-black/20 rounded-2xl p-3 sm:p-4 border border-white/5 relative" id="p1-area">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs sm:text-sm font-semibold text-gray-300 tracking-wider flex items-center gap-1" id="p1-title-label">
+                            <i class="fa-solid fa-user text-emerald-400"></i> <span id="p1-name-display">PLAYER 1</span>
+                        </span>
+                        <span class="px-3 py-1 bg-black/60 rounded-full text-xs font-bold text-emerald-400 border border-emerald-600/30">
+                            SCORE: <span id="p1-score">0</span>
+                        </span>
+                    </div>
+                    <div id="p1-hand" class="flex flex-wrap items-center justify-center min-h-[120px]"></div>
+                </div>
+
+                <div class="bg-black/20 rounded-2xl p-3 sm:p-4 border border-white/5 relative" id="p2-area">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs sm:text-sm font-semibold text-gray-300 tracking-wider flex items-center gap-1" id="p2-title-label">
+                            <i class="fa-solid fa-user text-blue-400"></i> <span id="p2-name-display">PLAYER 2</span>
+                        </span>
+                        <span class="px-3 py-1 bg-black/60 rounded-full text-xs font-bold text-blue-400 border border-blue-600/30">
+                            SCORE: <span id="p2-score">0</span>
+                        </span>
+                    </div>
+                    <div id="p2-hand" class="flex flex-wrap items-center justify-center min-h-[120px]"></div>
+                </div>
             </div>
 
             <!-- Message -->
@@ -522,57 +523,17 @@
         // --- Network Engine (PeerJS) ---
         let peer = null;
         let conn = null;
-        let hostConns = [];
-        let lobbyPlayers = [];
-        
         let isOnline = false;
         let isHost = false;
         let myName = '';
+        let opponentName = '';
         let myId = '';
-
-        function broadcastLobby() {
-            if (!isHost) return;
-            const msg = { type: 'lobby_update', players: lobbyPlayers };
-            hostConns.forEach(c => {
-                if (c.open) c.send(msg);
-            });
-            updateLobbyUI();
-        }
-
-        function updateLobbyUI() {
-            if (isHost) {
-                document.getElementById('host-player-count').innerText = `${lobbyPlayers.length} / 4`;
-                const startBtn = document.getElementById('start-online-btn');
-                startBtn.disabled = lobbyPlayers.length < 2;
-                document.getElementById('host-status-msg').innerText =
-                       lobbyPlayers.length < 2
-                        ? "対戦相手を待機中."
-                        : "ゲームを開始できます！";
-            
-                const list = document.getElementById('host-players-list');
-                list.innerHTML = lobbyPlayers.map(p => `<li>${p.isHost ? '<i class="fa-solid fa-crown text-yellow-500 text-xs"></i> ' : ''}${p.name}</li>`).join('');
-                document.getElementById('start-online-btn').disabled = lobbyPlayers.length < 1; 
-                if (lobbyPlayers.length >= 4) {
-                    document.getElementById('host-status-msg').innerText = "満室です！";
-                } else {
-                    document.getElementById('host-status-msg').innerText = "参加者を待機中...";
-                }
-            } else {
-                document.getElementById('join-player-count').innerText = `${lobbyPlayers.length} / 4`;
-                const list = document.getElementById('join-players-list');
-                list.innerHTML = lobbyPlayers.map(p => `<li>${p.isHost ? '<i class="fa-solid fa-crown text-yellow-500 text-xs"></i> ' : ''}${p.name}</li>`).join('');
-                document.getElementById('join-status-msg').innerText = "ホストがゲームを開始するのを待っています...";
-            }
-        }
 
         function initPeer(isHosting = false) {
             if (peer) return;
-            isHost = isHosting;
             if (isHosting) {
                 let randomCode = Math.floor(1000 + Math.random() * 9000).toString();
                 peer = new Peer('bjgame-' + randomCode);
-                hostConns = [];
-                lobbyPlayers = [];
             } else {
                 peer = new Peer();
             }
@@ -581,8 +542,8 @@
                 myId = id;
                 if (isHosting && id.startsWith('bjgame-')) {
                     document.getElementById('my-peer-id').innerText = id.replace('bjgame-', '');
-                    lobbyPlayers.push({ id: myId, name: myName, isHost: true });
-                    updateLobbyUI();
+                } else {
+                    document.getElementById('my-peer-id').innerText = id;
                 }
             });
             peer.on('error', err => {
@@ -593,25 +554,21 @@
                     initPeer(true);
                 }
             });
-            
-            if (isHosting) {
-                peer.on('connection', connection => {
-                    if (hostConns.length >= 3) {
-                        connection.on('open', () => {
-                            connection.send({ type: 'error', message: '部屋は満室です' });
-                            setTimeout(() => connection.close(), 500);
-                        });
-                        return;
-                    }
-                    hostConns.push(connection);
-                    setupConnection(connection);
-                });
-            }
+            peer.on('connection', connection => {
+                if (conn) return;
+                conn = connection;
+                setupConnection();
+                document.getElementById('host-status-msg').innerText = "対戦相手が接続しました！";
+                setTimeout(() => {
+                    startGameOnline(true);
+                }, 1000);
+            });
         }
 
         function hostOnlineGame() {
             playSound('chip');
             myName = document.getElementById('input-online-name').value.trim() || 'Player 1';
+            opponentName = 'Player 2';
             document.getElementById('host-info').classList.remove('hidden');
             document.getElementById('join-info').classList.add('hidden');
             initPeer(true);
@@ -638,9 +595,9 @@
                 const fullHostId = hostIdStr.length === 4 ? 'bjgame-' + hostIdStr : hostIdStr;
                 conn = peer.connect(fullHostId);
                 conn.on('open', () => {
-                    document.getElementById('join-lobby-view').classList.remove('hidden');
-                    setupConnection(conn);
-                    conn.send({ type: 'guest_join', name: myName, id: myId });
+                    document.getElementById('join-status-msg').innerText = "接続成功！ゲーム開始を待機中...";
+                    setupConnection();
+                    conn.send({ type: 'guest_join', name: myName });
                 });
                 conn.on('error', err => {
                     document.getElementById('join-status-msg').innerText = "接続エラー";
@@ -656,84 +613,24 @@
             playSound('chip');
         }
 
-        function setupConnection(connection) {
-            connection.on('data', data => {
-                handleNetworkData(data, connection);
+        function setupConnection() {
+            conn.on('data', data => {
+                handleNetworkData(data);
             });
-            connection.on('close', () => {
-                if (isHost) {
-                    hostConns = hostConns.filter(c => c !== connection);
-                    lobbyPlayers = lobbyPlayers.filter(p => p.id !== connection.peer);
-                    broadcastLobby();
-                } else {
-                    alert("通信が切断されました");
-                    exitToLobby();
-                }
-            });
-        }
-
-        function handleNetworkData(data, connection) {
-          if (data.type === 'guest_join') {
-
-         if (!isHost) return;
-
-          // 満室
-         if (lobbyPlayers.length >= 4) {
-                connection.send({
-                  type: "error",
-                  message: "部屋は満室です。"
-                 });
-             return;
-            }
-
-            // 名前重複
-             if (lobbyPlayers.some(p => p.name === data.name)) {
-                connection.send({
-                  type: "error",
-                 message: "同じ名前のプレイヤーがいます。"
-                });
-                return;
-            }
-
-            // ID重複
-            if (lobbyPlayers.some(p => p.id === connection.peer)) {
-             return;
-            }
-
-          lobbyPlayers.push({
-              id: connection.peer,
-               name: data.name,
-                isHost: false
-            });
-
-         broadcastLobby();
-        }
-            else if (data.type === 'lobby_update')
-            {
-                lobbyPlayers = data.players;
-                updateLobbyUI();
-            }
-            else if (data.type === 'game_start')
-            {
-
-                // 参加者側
-                  isOnline = true;
-                 isHost = false;
-
-                // ゲーム画面へ切り替える
-                 showScreen('screen-game');
-
-                  playSound('deal');
-
-                 return;
-            }
-            else if (data.type === 'error')
-            {
-                alert(data.message);
+            conn.on('close', () => {
+                alert("通信が切断されました");
                 exitToLobby();
+            });
+        }
+
+        function handleNetworkData(data) {
+            if (data.type === 'guest_join') {
+                if (isHost) {
+                    opponentName = data.name;
+                    document.getElementById('host-status-msg').innerText = `${opponentName} が接続しました！`;
+                }
             } else if (data.type === 'sync_state') {
                 gameState = data.gameState;
-                showScreen('screen-game');
                 isOnline = true;
                 isHost = false;
                 
@@ -750,20 +647,16 @@
                 
             } else if (data.type === 'action') {
                 if (isHost) {
-                    // Expect data.action and data.playerId
-                    if (data.action === 'hit') localHit(data.playerId);
-                    if (data.action === 'stand') localStand(data.playerId);
+                    if (data.action === 'hit') localHit();
+                    if (data.action === 'stand') localStand();
                     if (data.action === 'rematch') startGameOnline(true);
                 }
             }
         }
 
         function syncState(msg, eventType = '') {
-            if (isOnline && isHost) {
-                const packet = { type: 'sync_state', gameState: gameState, msg: msg, event: eventType };
-                hostConns.forEach(c => {
-                    if (c.open) c.send(packet);
-                });
+            if (isOnline && isHost && conn && conn.open) {
+                conn.send({ type: 'sync_state', gameState: gameState, msg: msg, event: eventType });
             }
         }
 
@@ -822,50 +715,31 @@
             isOnline = false;
             isHost = true;
             const p1Name = document.getElementById('input-p1-name').value.trim() || 'Player 1';
-            initGame([{ id: 'local', name: p1Name }]);
+            initGame(p1Name, 'Dealer AI');
         }
 
-       function startGameOnline(asHost) {
-         playSound('chip');
-         isOnline = true;
+        function startGameOnline(asHost) {
+            playSound('chip');
+            isOnline = true;
             isHost = asHost;
-
             if (isHost) {
-               initGame(lobbyPlayers);
-
-             // ★参加者へゲーム開始を通知
-             hostConns.forEach(c => {
-                 if (c.open) {
-                     c.send({ type: 'game_start' });
-                 }
-             });
-
-              // ★ゲームの状態を送信
-             syncState('ゲーム開始！', 'deal');
+                initGame(myName, opponentName);
             }
         }
 
-        function initGame(playersList) {
+        function initGame(p1, p2) {
             gameState = {
                 state: 'GAME_ACTIVE',
                 deck: createDeck(),
-                players: playersList.map(p => ({
-                    id: p.id,
-                    name: p.name,
-                    hand: [],
-                    score: 0,
-                    bust: false,
-                    bj: false
-                })),
+                player1: { name: p1, hand: [], score: 0, bust: false, bj: false },
+                player2: { name: p2, hand: [], score: 0, bust: false, bj: false },
                 dealer: { hand: [], score: 0 },
-                turnIndex: 0
+                turn: 'player1'
             };
 
-            // Deal initial cards
-            for (let i = 0; i < 2; i++) {
-                gameState.players.forEach(p => {
-                    p.hand.push(Object.assign(gameState.deck.pop(), {isNew: true}));
-                });
+            gameState.player1.hand.push(Object.assign(gameState.deck.pop(), {isNew: true}), Object.assign(gameState.deck.pop(), {isNew: true}));
+            if (isOnline) {
+                gameState.player2.hand.push(Object.assign(gameState.deck.pop(), {isNew: true}), Object.assign(gameState.deck.pop(), {isNew: true}));
             }
             gameState.dealer.hand.push(Object.assign(gameState.deck.pop(), {isNew: true}), { suit: '?', rank: '?', value: 0, isNew: true });
 
@@ -874,50 +748,39 @@
             showScreen('screen-game');
             playSound('deal');
             
-            checkTurn();
-        }
-
-        function checkTurn() {
-            if (gameState.turnIndex >= gameState.players.length) {
-                executeDealerTurn();
-                return;
-            }
-            
-            let activePlayer = gameState.players[gameState.turnIndex];
-            if (activePlayer.score === 21) {
-                activePlayer.bj = true;
+            if (gameState.player1.score === 21) {
+                gameState.player1.bj = true;
                 updateUI('');
                 syncState('', 'deal');
                 setTimeout(nextTurn, 500);
             } else {
-                let msg = `${activePlayer.name} のターンです。`;
+                let msg = `${gameState.player1.name} のターンです。`;
                 updateUI(msg);
                 syncState(msg, 'deal');
             }
         }
 
         function updateScores() {
-            gameState.players.forEach(p => p.score = getScore(p.hand));
+            gameState.player1.score = getScore(gameState.player1.hand);
+            if (isOnline) gameState.player2.score = getScore(gameState.player2.hand);
             gameState.dealer.score = getScore(gameState.dealer.hand);
         }
 
         function handleHit() {
             if (isOnline && !isHost) {
-                let myPlayerIndex = gameState.players.findIndex(p => p.id === myId);
-                if (conn && conn.open) conn.send({ type: 'action', action: 'hit', playerId: myPlayerIndex });
+                if (conn && conn.open) conn.send({ type: 'action', action: 'hit' });
                 playSound('chip');
             } else {
-                localHit(0); // local player is index 0
+                localHit();
             }
         }
 
         function handleStand() {
             if (isOnline && !isHost) {
-                let myPlayerIndex = gameState.players.findIndex(p => p.id === myId);
-                if (conn && conn.open) conn.send({ type: 'action', action: 'stand', playerId: myPlayerIndex });
+                if (conn && conn.open) conn.send({ type: 'action', action: 'stand' });
                 playSound('chip');
             } else {
-                localStand(0);
+                localStand();
             }
         }
 
@@ -932,14 +795,12 @@
             }
         }
 
-        function localHit(playerId) {
+        function localHit() {
             if (gameState.state !== 'GAME_ACTIVE') return;
-            if (playerId !== gameState.turnIndex) return; // Ignore if not this player's turn
-            
             playSound('flip');
             syncState('', 'flip');
             
-            let activePlayer = gameState.players[gameState.turnIndex];
+            let activePlayer = gameState.turn === 'player1' ? gameState.player1 : gameState.player2;
             activePlayer.hand.push(Object.assign(gameState.deck.pop(), {isNew: true}));
             updateScores();
 
@@ -960,23 +821,40 @@
             }
         }
 
-        function localStand(playerId) {
+        function localStand() {
             if (gameState.state !== 'GAME_ACTIVE') return;
-            if (playerId !== gameState.turnIndex) return; // Ignore if not this player's turn
-            
             playSound('chip');
             nextTurn();
         }
 
         function nextTurn() {
-            gameState.turnIndex++;
-            checkTurn();
+            if (gameState.turn === 'player1') {
+                if (isOnline) {
+                    gameState.turn = 'player2';
+                    if (gameState.player2.score === 21) {
+                        gameState.player2.bj = true;
+                        updateUI('');
+                        syncState('');
+                        setTimeout(nextTurn, 1000);
+                    } else {
+                        let msg = `${gameState.player2.name} のターンです。`;
+                        updateUI(msg);
+                        syncState(msg);
+                    }
+                } else {
+                    gameState.turn = 'dealer';
+                    executeDealerTurn();
+                }
+            } else if (gameState.turn === 'player2') {
+                gameState.turn = 'dealer';
+                executeDealerTurn();
+            }
         }
 
         function executeDealerTurn() {
             updateUI('ディーラーのターンです...');
             syncState('ディーラーのターンです...');
-            
+            // Reveal hole card
             gameState.dealer.hand[1] = gameState.deck.pop(); 
             updateScores();
             updateUI('ディーラーのターンです...');
@@ -1001,21 +879,24 @@
             let dScore = gameState.dealer.score;
             let dBust = dScore > 21;
 
-            let myPlayerIndex = gameState.players.findIndex(p => p.id === (isOnline ? myId : 'local'));
-            if (myPlayerIndex === -1) myPlayerIndex = 0;
+            let p1Result = evaluateResult(gameState.player1, dScore, dBust);
+            saveStats(gameState.player1.name, p1Result, gameState.player1);
             
-            let localPlayer = gameState.players[myPlayerIndex];
-            let pResult = evaluateResult(localPlayer, dScore, dBust);
-            
-            saveStats(localPlayer.name, pResult, localPlayer);
-            saveMatchHistory(localPlayer, gameState.dealer, pResult);
+            let p2Result = 'draw';
+            if (isOnline) {
+                p2Result = evaluateResult(gameState.player2, dScore, dBust);
+                saveStats(gameState.player2.name, p2Result, gameState.player2);
+                saveMatchHistory(gameState.player1, gameState.player2, gameState.dealer, p1Result, p2Result);
+            } else {
+                saveMatchHistory(gameState.player1, {name: 'Dealer AI', score: dScore, hand: gameState.dealer.hand}, gameState.dealer, p1Result, 'draw');
+            }
 
             let event = '';
-            if (pResult === 'win' || pResult === 'bj') {
+            if (p1Result === 'win' || (isOnline && p2Result === 'win') || p1Result === 'bj' || (isOnline && p2Result === 'bj')) {
                 playSound('win');
                 confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
                 event = 'win';
-            } else if (pResult === 'lose') {
+            } else if (p1Result === 'lose' && (!isOnline || p2Result === 'lose')) {
                 playSound('lose');
                 event = 'lose';
             } else {
@@ -1023,28 +904,30 @@
             }
 
             let resultMsg = 'ゲーム終了！';
+            let p1Name = gameState.player1.name;
+            let p2Name = gameState.player2 ? gameState.player2.name : '';
+
             if (!isOnline) {
-                if (pResult === 'bj') resultMsg = `${localPlayer.name}がBLACKJACKで勝利！`;
-                else if (pResult === 'win') resultMsg = 'プレイヤーの勝利！';
-                else if (pResult === 'lose') resultMsg = 'ディーラーの勝利！';
+                if (p1Result === 'bj') resultMsg = `${p1Name}がBLACKJACKで勝利！`;
+                else if (p1Result === 'win') resultMsg = 'プレイヤーの勝利！';
+                else if (p1Result === 'lose') resultMsg = 'ディーラーの勝利！';
                 else resultMsg = '引き分け (Push)';
             } else {
                 let winners = [];
                 let bjs = [];
-                gameState.players.forEach(p => {
-                    let res = evaluateResult(p, dScore, dBust);
-                    if (res === 'win') winners.push(p.name);
-                    if (res === 'bj') bjs.push(p.name);
-                });
+                if (p1Result === 'win') winners.push(p1Name);
+                if (p1Result === 'bj') bjs.push(p1Name);
+                if (p2Result === 'win') winners.push(p2Name);
+                if (p2Result === 'bj') bjs.push(p2Name);
 
                 if (bjs.length > 0) {
                     resultMsg = `${bjs.join('と')}がBLACKJACKで勝利！`;
                 } else if (winners.length > 0) {
                     resultMsg = `${winners.join('と')}の勝利！`;
-                } else if (winners.length === 0 && bjs.length === 0) {
-                    let allLost = gameState.players.every(p => evaluateResult(p, dScore, dBust) === 'lose');
-                    if (allLost) resultMsg = 'ディーラーの勝利！';
-                    else resultMsg = '引き分け (Push)';
+                } else if (p1Result === 'lose' && p2Result === 'lose') {
+                    resultMsg = 'ディーラーの勝利！';
+                } else {
+                    resultMsg = '引き分け (Push)';
                 }
             }
 
@@ -1061,47 +944,47 @@
         }
 
         function updateUI(msg) {
-            // Render Dealer
-            document.getElementById('dealer-score').innerText = gameState.state === 'GAME_RESULT' ? gameState.dealer.score : '?';
-            document.getElementById('dealer-hand').innerHTML = gameState.dealer.hand.map((c, i) => createCardHTML(c, i)).join('');
+            // Render Hands
+            document.getElementById('p1-name-display').innerText = gameState.player1.name;
+            document.getElementById('p2-name-display').innerText = gameState.player2.name;
 
-            // Render Players
-            const container = document.getElementById('players-container');
-            container.innerHTML = '';
-            
-            gameState.players.forEach((p, index) => {
-                let isMyTurn = gameState.state === 'GAME_ACTIVE' && gameState.turnIndex === index;
-                let bgClass = isMyTurn ? 'border-yellow-500/40 bg-yellow-500/5 shadow-[0_0_15px_rgba(234,179,8,0.2)]' : 'border-white/5 bg-black/20';
-                
-                let html = `
-                <div class="rounded-2xl p-3 sm:p-4 border relative flex-1 min-w-[200px] max-w-[300px] transition-all ${bgClass}" id="player-area-${index}">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs sm:text-sm font-semibold text-gray-300 tracking-wider flex items-center gap-1 truncate max-w-[120px]">
-                            <i class="fa-solid fa-user ${index === 0 ? 'text-emerald-400' : 'text-blue-400'}"></i> ${p.name}
-                        </span>
-                        <span class="px-3 py-1 bg-black/60 rounded-full text-xs font-bold ${index === 0 ? 'text-emerald-400 border-emerald-600/30' : 'text-blue-400 border-blue-600/30'} border">
-                            SCORE: <span>${p.score}</span>
-                        </span>
-                    </div>
-                    <div class="flex flex-wrap items-center justify-center min-h-[120px]">
-                        ${p.hand.map((c, i) => createCardHTML(c, i)).join('')}
-                    </div>
-                </div>`;
-                container.innerHTML += html;
-            });
+            document.getElementById('p1-score').innerText = gameState.player1.score;
+            document.getElementById('p2-score').innerText = gameState.player2.score;
+            document.getElementById('dealer-score').innerText = gameState.state === 'GAME_RESULT' ? gameState.dealer.score : '?';
+
+            document.getElementById('p1-hand').innerHTML = gameState.player1.hand.map((c, i) => createCardHTML(c, i)).join('');
+            document.getElementById('p2-hand').innerHTML = gameState.player2.hand.map((c, i) => createCardHTML(c, i)).join('');
+            document.getElementById('dealer-hand').innerHTML = gameState.dealer.hand.map((c, i) => createCardHTML(c, i)).join('');
 
             // Highlight Turn
             let turnText = '';
+            document.getElementById('p1-area').classList.remove('border-yellow-500/40', 'bg-yellow-500/5');
+            document.getElementById('p2-area').classList.remove('border-yellow-500/40', 'bg-yellow-500/5');
+
+            if (!isOnline) {
+                document.getElementById('p2-area').classList.add('hidden');
+                document.getElementById('p1-area').parentElement.classList.remove('md:grid-cols-2');
+                document.getElementById('p1-area').parentElement.classList.add('max-w-md', 'mx-auto', 'w-full');
+            } else {
+                document.getElementById('p2-area').classList.remove('hidden');
+                document.getElementById('p1-area').parentElement.classList.add('md:grid-cols-2');
+                document.getElementById('p1-area').parentElement.classList.remove('max-w-md', 'mx-auto', 'w-full');
+            }
+
             if (gameState.state === 'GAME_ACTIVE') {
-                if (gameState.turnIndex < gameState.players.length) {
-                    turnText = `${gameState.players[gameState.turnIndex].name}のターン`;
+                if (gameState.turn === 'player1') {
+                    turnText = `${gameState.player1.name}のターン`;
+                    document.getElementById('p1-area').classList.add('border-yellow-500/40', 'bg-yellow-500/5');
+                } else if (gameState.turn === 'player2') {
+                    turnText = `${gameState.player2.name}のターン`;
+                    document.getElementById('p2-area').classList.add('border-yellow-500/40', 'bg-yellow-500/5');
                 } else {
                     turnText = 'ディーラーのターン';
                 }
                 
+                // If online, disable buttons if it's not our turn
                 if (isOnline) {
-                    let myPlayerIndex = gameState.players.findIndex(p => p.id === myId);
-                    let isMyTurn = (gameState.turnIndex === myPlayerIndex);
+                    let isMyTurn = (isHost && gameState.turn === 'player1') || (!isHost && gameState.turn === 'player2');
                     document.getElementById('hit-btn').disabled = !isMyTurn;
                     document.getElementById('stand-btn').disabled = !isMyTurn;
                 } else {
@@ -1113,17 +996,15 @@
                 turnText = 'ゲーム結果';
                 document.getElementById('hit-btn').disabled = true;
                 document.getElementById('stand-btn').disabled = true;
-                if (!isOnline || isHost) {
-                    document.getElementById('rematch-btn').classList.remove('hidden');
-                } else {
-                    document.getElementById('rematch-btn').classList.add('hidden');
-                }
+                document.getElementById('rematch-btn').classList.remove('hidden');
             }
 
             document.getElementById('game-turn-display').innerText = turnText;
             if (msg) document.getElementById('game-message').innerText = msg;
 
-            gameState.players.forEach(p => p.hand.forEach(c => c.isNew = false));
+            // Consume isNew flag
+            gameState.player1.hand.forEach(c => c.isNew = false);
+            if(gameState.player2) gameState.player2.hand.forEach(c => c.isNew = false);
             gameState.dealer.hand.forEach(c => c.isNew = false);
         }
 
@@ -1136,14 +1017,11 @@
                 peer.destroy();
                 peer = null;
             }
-            hostConns.forEach(c => c.close());
-            hostConns = [];
-            lobbyPlayers = [];
             isOnline = false;
             isHost = false;
             document.getElementById('host-info').classList.add('hidden');
             document.getElementById('join-info').classList.add('hidden');
-            document.getElementById('host-status-msg').innerText = "参加者を待機中...";
+            document.getElementById('host-status-msg').innerText = "対戦相手を待機中...";
             document.getElementById('join-status-msg').innerText = "";
             playSound('flip');
             showScreen('screen-lobby');
@@ -1176,15 +1054,15 @@
             saveDB(db);
         }
 
-        function saveMatchHistory(player, dealer, result) {
+        function saveMatchHistory(p1, p2, dealer, res1, res2) {
             let db = getDB();
             let date = new Date().toLocaleString('ja-JP');
             db.history.unshift({
                 date,
-                p1Name: player.name, p2Name: 'Dealer AI',
-                p1Score: player.score, p2Score: dealer.score,
+                p1Name: p1.name, p2Name: p2.name,
+                p1Score: p1.score, p2Score: p2.score,
                 dScore: dealer.score,
-                p1Result: result, p2Result: result === 'win' ? 'lose' : result === 'lose' ? 'win' : 'draw'
+                p1Result: res1, p2Result: res2
             });
             if (db.history.length > 100) db.history.pop();
             saveDB(db);
