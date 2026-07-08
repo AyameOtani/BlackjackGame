@@ -529,12 +529,30 @@
         let opponentName = '';
         let myId = '';
 
-        function initPeer() {
+        function initPeer(isHosting = false) {
             if (peer) return;
-            peer = new Peer();
+            if (isHosting) {
+                let randomCode = Math.floor(1000 + Math.random() * 9000).toString();
+                peer = new Peer('bjgame-' + randomCode);
+            } else {
+                peer = new Peer();
+            }
+            
             peer.on('open', id => {
                 myId = id;
-                document.getElementById('my-peer-id').innerText = id;
+                if (isHosting && id.startsWith('bjgame-')) {
+                    document.getElementById('my-peer-id').innerText = id.replace('bjgame-', '');
+                } else {
+                    document.getElementById('my-peer-id').innerText = id;
+                }
+            });
+            peer.on('error', err => {
+                console.error(err);
+                if (err.type === 'unavailable-id') {
+                    peer.destroy();
+                    peer = null;
+                    initPeer(true);
+                }
             });
             peer.on('connection', connection => {
                 if (conn) return;
@@ -553,28 +571,29 @@
             opponentName = 'Player 2';
             document.getElementById('host-info').classList.remove('hidden');
             document.getElementById('join-info').classList.add('hidden');
-            initPeer();
+            initPeer(true);
         }
 
         function showJoinDialog() {
             playSound('chip');
             document.getElementById('join-info').classList.remove('hidden');
             document.getElementById('host-info').classList.add('hidden');
-            initPeer();
+            initPeer(false);
         }
 
         function joinOnlineGame() {
             playSound('chip');
             myName = document.getElementById('input-online-name').value.trim() || 'Player 2';
-            const hostId = document.getElementById('input-join-id').value.trim();
-            if (!hostId) return;
+            const hostIdStr = document.getElementById('input-join-id').value.trim();
+            if (!hostIdStr) return;
             
             document.getElementById('join-status-msg').innerText = "接続中...";
-            if (!peer) initPeer();
+            if (!peer) initPeer(false);
             
             const tryConnect = () => {
                 if (!peer || !peer.id) { setTimeout(tryConnect, 100); return; }
-                conn = peer.connect(hostId);
+                const fullHostId = hostIdStr.length === 4 ? 'bjgame-' + hostIdStr : hostIdStr;
+                conn = peer.connect(fullHostId);
                 conn.on('open', () => {
                     document.getElementById('join-status-msg').innerText = "接続成功！ゲーム開始を待機中...";
                     setupConnection();
@@ -589,7 +608,8 @@
 
         function copyPeerId() {
             if (!myId) return;
-            navigator.clipboard.writeText(myId);
+            const codeToCopy = myId.startsWith('bjgame-') ? myId.replace('bjgame-', '') : myId;
+            navigator.clipboard.writeText(codeToCopy);
             playSound('chip');
         }
 
