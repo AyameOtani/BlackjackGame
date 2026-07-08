@@ -405,8 +405,9 @@
         };
 
         function createCardHTML(card, index) {
+            let animClass = card.isNew ? 'deal-animate' : '';
             if (card.rank === '?') {
-                return `<div class="card-container"><div class="card-inner"><div class="card-back"></div></div></div>`;
+                return `<div class="card-container ${animClass}"><div class="card-inner"><div class="card-back"></div></div></div>`;
             }
             const isRed = card.suit === '♥' || card.suit === '♦';
             const colorClass = isRed ? 'suit-red' : 'suit-black';
@@ -423,7 +424,7 @@
                 centerDeco = `<div class="absolute inset-0 flex items-center justify-center p-4"><div class="w-6 h-6">${suitSvgStr}</div></div>`;
             }
 
-            return `<div class="card-container flipped deal-animate"><div class="card-inner"><div class="card-back"></div><div class="card-front text-left select-none relative"><div class="top-left">${indexHTML}</div>${centerDeco}<div class="bottom-right">${indexHTML}</div></div></div></div>`;
+            return `<div class="card-container flipped ${animClass}"><div class="card-inner"><div class="card-back"></div><div class="card-front text-left select-none relative"><div class="top-left">${indexHTML}</div>${centerDeco}<div class="bottom-right">${indexHTML}</div></div></div></div>`;
         }
 
         // --- Network Engine (PeerJS) ---
@@ -623,11 +624,11 @@
                 turn: 'player1'
             };
 
-            gameState.player1.hand.push(gameState.deck.pop(), gameState.deck.pop());
+            gameState.player1.hand.push(Object.assign(gameState.deck.pop(), {isNew: true}), Object.assign(gameState.deck.pop(), {isNew: true}));
             if (isOnline) {
-                gameState.player2.hand.push(gameState.deck.pop(), gameState.deck.pop());
+                gameState.player2.hand.push(Object.assign(gameState.deck.pop(), {isNew: true}), Object.assign(gameState.deck.pop(), {isNew: true}));
             }
-            gameState.dealer.hand.push(gameState.deck.pop(), { suit: '?', rank: '?', value: 0 });
+            gameState.dealer.hand.push(Object.assign(gameState.deck.pop(), {isNew: true}), { suit: '?', rank: '?', value: 0, isNew: true });
 
             updateScores();
             
@@ -687,7 +688,7 @@
             syncState('', 'flip');
             
             let activePlayer = gameState.turn === 'player1' ? gameState.player1 : gameState.player2;
-            activePlayer.hand.push(gameState.deck.pop());
+            activePlayer.hand.push(Object.assign(gameState.deck.pop(), {isNew: true}));
             updateScores();
 
             if (activePlayer.score > 21) {
@@ -748,7 +749,7 @@
 
             let dealLoop = setInterval(() => {
                 if (gameState.dealer.score < 17) {
-                    gameState.dealer.hand.push(gameState.deck.pop());
+                    gameState.dealer.hand.push(Object.assign(gameState.deck.pop(), {isNew: true}));
                     updateScores();
                     playSound('flip');
                     updateUI('ディーラーがカードを引いています...');
@@ -789,8 +790,16 @@
                 playSound('chip');
             }
 
-            updateUI('ゲーム終了！');
-            syncState('ゲーム終了！', event);
+            let resultMsg = 'ゲーム終了！';
+            if (!isOnline) {
+                if (p1Result === 'bj') resultMsg = 'BLACKJACKで勝利！';
+                else if (p1Result === 'win') resultMsg = 'プレイヤーの勝利！';
+                else if (p1Result === 'lose') resultMsg = 'ディーラーの勝利...';
+                else resultMsg = '引き分け (Push)';
+            }
+
+            updateUI(resultMsg);
+            syncState(resultMsg, event);
         }
 
         function evaluateResult(player, dScore, dBust) {
@@ -859,6 +868,11 @@
 
             document.getElementById('game-turn-display').innerText = turnText;
             if (msg) document.getElementById('game-message').innerText = msg;
+
+            // Consume isNew flag
+            gameState.player1.hand.forEach(c => c.isNew = false);
+            if(gameState.player2) gameState.player2.hand.forEach(c => c.isNew = false);
+            gameState.dealer.hand.forEach(c => c.isNew = false);
         }
 
         function exitToLobby() {
