@@ -860,8 +860,8 @@
 
         function evaluateResult(player, dScore, dBust) {
             if (player.bust) return 'lose';
-            if (dBust) return player.bj ? 'bj' : 'win';
-            if (player.score > dScore) return player.bj ? 'bj' : 'win';
+            if (dBust) return (player.score === 21 || player.bj) ? 'bj' : 'win';
+            if (player.score > dScore) return (player.score === 21 || player.bj) ? 'bj' : 'win';
             if (player.score < dScore) return 'lose';
             return 'draw';
         }
