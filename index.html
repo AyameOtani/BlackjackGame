@@ -106,17 +106,13 @@
             <div class="bg-black/40 border border-yellow-600/30 rounded-2xl p-6 shadow-inner space-y-4 relative overflow-hidden">
                 <div class="absolute top-0 left-0 bg-yellow-600/20 text-yellow-500 text-[10px] font-bold px-3 py-1 rounded-br-lg">LOCAL</div>
                 <div>
-                    <label class="block text-xs font-bold text-yellow-500 mb-2 uppercase tracking-widest mt-2">プレイヤー1の名前</label>
+                    <label class="block text-xs font-bold text-yellow-500 mb-2 uppercase tracking-widest mt-2">プレイヤーの名前</label>
                     <input type="text" id="input-p1-name" placeholder="Player 1" value="Player 1" class="w-full bg-zinc-900 border border-yellow-600/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400 text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-yellow-500 mb-2 uppercase tracking-widest">プレイヤー2の名前</label>
-                    <input type="text" id="input-p2-name" placeholder="Player 2" value="Player 2" class="w-full bg-zinc-900 border border-yellow-600/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400 text-sm">
                 </div>
 
                 <div class="pt-2">
                     <button onclick="startGameLocal()" class="w-full px-4 py-3 bg-gradient-to-b from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-neutral-950 font-black rounded-xl text-sm transition shadow-md border-b-4 border-amber-900">
-                        <i class="fa-solid fa-play mr-1"></i> 2人プレイ開始 (ローカル)
+                        <i class="fa-solid fa-play mr-1"></i> 1人プレイ開始 (ローカル)
                     </button>
                 </div>
             </div>
@@ -605,8 +601,7 @@
             isOnline = false;
             isHost = true;
             const p1Name = document.getElementById('input-p1-name').value.trim() || 'Player 1';
-            const p2Name = document.getElementById('input-p2-name').value.trim() || 'Player 2';
-            initGame(p1Name, p2Name);
+            initGame(p1Name, 'Dealer AI');
         }
 
         function startGameOnline(asHost) {
@@ -629,7 +624,9 @@
             };
 
             gameState.player1.hand.push(gameState.deck.pop(), gameState.deck.pop());
-            gameState.player2.hand.push(gameState.deck.pop(), gameState.deck.pop());
+            if (isOnline) {
+                gameState.player2.hand.push(gameState.deck.pop(), gameState.deck.pop());
+            }
             gameState.dealer.hand.push(gameState.deck.pop(), { suit: '?', rank: '?', value: 0 });
 
             updateScores();
@@ -651,7 +648,7 @@
 
         function updateScores() {
             gameState.player1.score = getScore(gameState.player1.hand);
-            gameState.player2.score = getScore(gameState.player2.hand);
+            if (isOnline) gameState.player2.score = getScore(gameState.player2.hand);
             gameState.dealer.score = getScore(gameState.dealer.hand);
         }
 
@@ -718,16 +715,21 @@
 
         function nextTurn() {
             if (gameState.turn === 'player1') {
-                gameState.turn = 'player2';
-                if (gameState.player2.score === 21) {
-                    gameState.player2.bj = true;
-                    updateUI('');
-                    syncState('');
-                    setTimeout(nextTurn, 1000);
+                if (isOnline) {
+                    gameState.turn = 'player2';
+                    if (gameState.player2.score === 21) {
+                        gameState.player2.bj = true;
+                        updateUI('');
+                        syncState('');
+                        setTimeout(nextTurn, 1000);
+                    } else {
+                        let msg = `${gameState.player2.name} のターンです。`;
+                        updateUI(msg);
+                        syncState(msg);
+                    }
                 } else {
-                    let msg = `${gameState.player2.name} のターンです。`;
-                    updateUI(msg);
-                    syncState(msg);
+                    gameState.turn = 'dealer';
+                    executeDealerTurn();
                 }
             } else if (gameState.turn === 'player2') {
                 gameState.turn = 'dealer';
@@ -764,18 +766,23 @@
             let dBust = dScore > 21;
 
             let p1Result = evaluateResult(gameState.player1, dScore, dBust);
-            let p2Result = evaluateResult(gameState.player2, dScore, dBust);
-
             saveStats(gameState.player1.name, p1Result, gameState.player1);
-            saveStats(gameState.player2.name, p2Result, gameState.player2);
-            saveMatchHistory(gameState.player1, gameState.player2, gameState.dealer, p1Result, p2Result);
+            
+            let p2Result = 'draw';
+            if (isOnline) {
+                p2Result = evaluateResult(gameState.player2, dScore, dBust);
+                saveStats(gameState.player2.name, p2Result, gameState.player2);
+                saveMatchHistory(gameState.player1, gameState.player2, gameState.dealer, p1Result, p2Result);
+            } else {
+                saveMatchHistory(gameState.player1, {name: 'Dealer AI', score: dScore, hand: gameState.dealer.hand}, gameState.dealer, p1Result, 'draw');
+            }
 
             let event = '';
-            if (p1Result === 'win' || p2Result === 'win' || p1Result === 'bj' || p2Result === 'bj') {
+            if (p1Result === 'win' || (isOnline && p2Result === 'win') || p1Result === 'bj' || (isOnline && p2Result === 'bj')) {
                 playSound('win');
                 confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
                 event = 'win';
-            } else if (p1Result === 'lose' && p2Result === 'lose') {
+            } else if (p1Result === 'lose' && (!isOnline || p2Result === 'lose')) {
                 playSound('lose');
                 event = 'lose';
             } else {
@@ -811,6 +818,16 @@
             let turnText = '';
             document.getElementById('p1-area').classList.remove('border-yellow-500/40', 'bg-yellow-500/5');
             document.getElementById('p2-area').classList.remove('border-yellow-500/40', 'bg-yellow-500/5');
+
+            if (!isOnline) {
+                document.getElementById('p2-area').classList.add('hidden');
+                document.getElementById('p1-area').parentElement.classList.remove('md:grid-cols-2');
+                document.getElementById('p1-area').parentElement.classList.add('max-w-md', 'mx-auto', 'w-full');
+            } else {
+                document.getElementById('p2-area').classList.remove('hidden');
+                document.getElementById('p1-area').parentElement.classList.add('md:grid-cols-2');
+                document.getElementById('p1-area').parentElement.classList.remove('max-w-md', 'mx-auto', 'w-full');
+            }
 
             if (gameState.state === 'GAME_ACTIVE') {
                 if (gameState.turn === 'player1') {
