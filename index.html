@@ -708,16 +708,32 @@
 
          broadcastLobby();
         }
-            else if (data.type === 'lobby_update') {
+            else if (data.type === 'lobby_update')
+            {
                 lobbyPlayers = data.players;
                 updateLobbyUI();
-            } else if (data.type === 'game_start') {
-                startGameOnline(false); // Only called for guests
-            } else if (data.type === 'error') {
+            }
+            else if (data.type === 'game_start')
+            {
+
+                // 参加者側
+                  isOnline = true;
+                 isHost = false;
+
+                // ゲーム画面へ切り替える
+                 showScreen('screen-game');
+
+                  playSound('deal');
+
+                 return;
+            }
+            else if (data.type === 'error')
+            {
                 alert(data.message);
                 exitToLobby();
             } else if (data.type === 'sync_state') {
                 gameState = data.gameState;
+                showScreen('screen-game');
                 isOnline = true;
                 isHost = false;
                 
