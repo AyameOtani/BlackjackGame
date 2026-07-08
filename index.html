@@ -3,744 +3,1050 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Classic Blackjack</title>
+    <title>BLACKJACK ONLINE - LOCAL 2 PLAYER</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PeerJS for Online Multiplayer -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        :root {
-            --bg-dark: #0f172a;
-            --table-green: #064e3b;
-            --table-light: #047857;
-            --border-wood: #451a03;
-            --border-gold: #fbbf24;
-            --gold: #fbbf24;
-            --gold-gradient: linear-gradient(to bottom, #fde68a, #d97706);
-            --red: #dc2626;
-            --black: #171717;
-            --white: #f8fafc;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Georgia', 'Times New Roman', serif;
-            user-select: none;
-        }
-
         body {
-            background-color: var(--bg-dark);
-            color: var(--white);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            background-color: #022c22;
+            font-family: 'Georgia', 'Times New Roman', 'New York', serif;
             overflow-x: hidden;
         }
-
         .casino-table {
-            background: radial-gradient(circle at center, var(--table-light) 0%, var(--table-green) 100%);
-            border: 16px solid var(--border-wood);
-            border-radius: 40px;
+            background: radial-gradient(circle at center, #065f46 0%, #022c22 100%);
+            border: 14px solid #5c2c16;
             box-shadow: 
-                0 30px 60px rgba(0, 0, 0, 0.8),
-                inset 0 0 80px rgba(0, 0, 0, 0.9),
-                inset 0 0 10px 5px rgba(251, 191, 36, 0.3);
-            width: 95%;
-            max-width: 1000px;
-            padding: 2rem;
+                0 25px 50px -12px rgba(0, 0, 0, 0.8),
+                inset 0 0 100px rgba(0, 0, 0, 0.9);
             position: relative;
-            margin: 1rem;
         }
-
-        /* Decorative table border */
-        .casino-table::before {
+        .casino-table::after {
             content: '';
             position: absolute;
-            top: 10px; left: 10px; right: 10px; bottom: 10px;
-            border: 2px dashed rgba(251, 191, 36, 0.3);
-            border-radius: 20px;
+            top: 15px; left: 15px; right: 15px; bottom: 15px;
+            border: 2px dashed rgba(245, 158, 11, 0.25);
+            border-radius: 1.5rem;
             pointer-events: none;
         }
-
-        .header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .title {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: transparent;
-            background: var(--gold-gradient);
-            -webkit-background-clip: text;
-            background-clip: text;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            letter-spacing: 4px;
-        }
-
-        /* --- Screens --- */
-        .screen { display: none; width: 100%; flex-direction: column; align-items: center; }
-        .screen.active { display: flex; }
-
-        /* --- Buttons --- */
-        .btn {
-            background: var(--gold-gradient);
-            border: none;
-            border-bottom: 4px solid #b45309;
-            color: #451a03;
-            font-size: 1.1rem;
-            font-weight: bold;
-            padding: 0.75rem 2rem;
-            border-radius: 9999px;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            margin: 0.5rem;
-        }
-        .btn:hover {
-            transform: translateY(2px);
-            border-bottom-width: 2px;
-            margin-top: calc(0.5rem + 2px);
-            margin-bottom: calc(0.5rem - 2px);
-        }
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-            border-bottom-width: 4px !important;
-            margin: 0.5rem !important;
-        }
-
-        .btn-hit { background: linear-gradient(to bottom, #60a5fa, #2563eb); color: white; border-color: #1e3a8a; }
-        .btn-stand { background: linear-gradient(to bottom, #f87171, #dc2626); color: white; border-color: #7f1d1d; }
-
-        /* --- Cards --- */
-        .hand-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            margin-bottom: 2rem;
-            min-height: 180px;
-        }
-
-        .hand-title {
-            font-size: 1.2rem;
-            color: var(--gold);
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .score-badge {
-            background: rgba(0,0,0,0.6);
-            border: 1px solid var(--gold);
-            padding: 0.2rem 0.8rem;
-            border-radius: 9999px;
-            font-size: 1rem;
-            color: var(--white);
-        }
-
-        .cards-container {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 10px;
+        .card-container {
             perspective: 1000px;
+            width: 80px; height: 115px;
+            margin: 4px; display: inline-block; vertical-align: top;
         }
-
-        .card {
-            width: 90px;
-            height: 130px;
-            position: relative;
-            transform-style: preserve-3d;
-            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @media (min-width: 600px) {
-            .card { width: 126px; height: 176px; } /* Aspect ratio approx 63:88 */
-        }
-
         .card-inner {
-            width: 100%;
-            height: 100%;
-            position: absolute;
+            position: relative; width: 100%; height: 100%; text-align: center;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             transform-style: preserve-3d;
         }
-
-        .card.flipped .card-inner { transform: rotateY(180deg); }
-
-        .card-face {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            backface-visibility: hidden;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            border: 1px solid rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
-
-        .card-back {
-            background-color: #8b0000;
-            background-image: 
-                linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.1) 49%, rgba(255,255,255,0.1) 51%, transparent 52%),
-                linear-gradient(-45deg, transparent 48%, rgba(255,255,255,0.1) 49%, rgba(255,255,255,0.1) 51%, transparent 52%);
-            background-size: 16px 16px;
-            border: 5px solid white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .card-back::after {
-            content: '';
-            width: 50%;
-            height: 50%;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
-        }
-
-        .card-front {
-            background: #fffdf8;
+        .card-container.flipped .card-inner {
             transform: rotateY(180deg);
-            display: flex;
-            flex-direction: column;
-            padding: 6px;
         }
-
+        .card-front, .card-back {
+            position: absolute; width: 100%; height: 100%;
+            backface-visibility: hidden; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+        }
+        .card-front {
+            background: #faf8f5; color: #111827; transform: rotateY(180deg); border: 1px solid #d1d5db;
+            padding: 4px; box-sizing: border-box; display: flex; flex-direction: column;
+            justify-content: space-between; overflow: hidden;
+        }
         .card-front::before {
-            content: '';
-            position: absolute;
-            top: 5px; left: 5px; right: 5px; bottom: 5px;
-            border: 1px solid rgba(212, 175, 55, 0.4);
-            border-radius: 4px;
-            pointer-events: none;
+            content: ''; position: absolute; top: 3px; left: 3px; right: 3px; bottom: 3px;
+            border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 4px; pointer-events: none;
         }
-
-        .card-corner {
-            position: absolute;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            line-height: 0.9;
-            font-size: 20px;
-            font-weight: bold;
-            font-family: Arial, sans-serif;
-            z-index: 10;
+        .card-back {
+            background-color: #991b1b;
+            background-image: 
+                radial-gradient(rgba(255, 255, 255, 0.12) 9px, transparent 10px),
+                repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.04) 0px, rgba(255, 255, 255, 0.04) 2px, transparent 2px, transparent 10px),
+                repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.04) 0px, rgba(255, 255, 255, 0.04) 2px, transparent 2px, transparent 10px);
+            background-size: 100% 100%, 12px 12px, 12px 12px;
+            border: 4px solid #ffffff; box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
+            display: flex; align-items: center; justify-content: center;
         }
-        .top-left { top: 8px; left: 8px; }
-        .bottom-right { bottom: 8px; right: 8px; transform: rotate(180deg); }
-        
-        .suit-red { color: var(--red); }
-        .suit-black { color: var(--black); }
-
-        .card-center {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%; height: 100%;
+        .card-back::after {
+            content: ''; border: 2px solid rgba(255, 255, 255, 0.25); border-radius: 50%; width: 28px; height: 28px;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
         }
-
-        .face-card-container {
-            width: 68%;
-            height: 84%;
-            border: 2px solid rgba(0,0,0,0.8);
-            border-radius: 2px;
-            overflow: hidden;
-            position: relative;
-            background: #fff;
-            box-shadow: inset 0 0 4px rgba(212,175,55,0.5);
-        }
-
-        /* Deal Animation */
-        @keyframes deal {
-            0% { transform: translateY(-200px) rotate(-45deg) scale(0.5); opacity: 0; }
+        @keyframes deal-card {
+            0% { transform: translateY(-150px) rotate(-30deg) scale(0.5); opacity: 0; }
             100% { transform: translateY(0) rotate(0) scale(1); opacity: 1; }
         }
-        .animate-deal { animation: deal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-
-        /* Controls */
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        /* Message */
-        .message-area {
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 1rem 0;
-        }
-        .message-text {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--gold);
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-        }
-        .result-message {
-            font-size: 2rem;
-            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        @keyframes popIn {
-            0% { transform: scale(0); opacity: 0; }
-            80% { transform: scale(1.1); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        /* SVG Shared Styles */
-        .svg-gold { fill: url(#goldGrad); }
-        .svg-red { fill: var(--red); }
-        .svg-black { fill: var(--black); }
-        .svg-skin { fill: #fcd34d; }
-        .svg-line { stroke: var(--black); stroke-width: 1.5; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+        .deal-animate { animation: deal-card 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards; }
+        .card-corner { position: absolute; display: flex; flex-direction: column; align-items: center; line-height: 0.85; font-size: 12px; font-weight: 900; z-index: 10; }
+        .card-corner.top-left { top: 4px; left: 5px; }
+        .card-corner.bottom-right { bottom: 4px; right: 5px; transform: rotate(180deg); }
+        .suit-red { color: #b91c1c; }
+        .suit-black { color: #111827; }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
 
-<div class="casino-table">
-    <div class="header">
-        <div class="title">BLACKJACK</div>
-    </div>
-
-    <!-- Start Screen -->
-    <div id="screen-start" class="screen active">
-        <p style="color: var(--gold-light); margin-bottom: 2rem; font-style: italic;">Player VS Dealer AI</p>
-        <button class="btn" onclick="startGame()">ゲームスタート</button>
-    </div>
-
-    <!-- Game Screen -->
-    <div id="screen-game" class="screen">
+    <div class="max-w-4xl w-full casino-table rounded-[2.5rem] p-4 sm:p-8 text-white relative">
         
-        <!-- Dealer Area -->
-        <div class="hand-area">
-            <div class="hand-title">
-                Dealer <span class="score-badge" id="dealer-score">?</span>
+        <div class="text-center mb-4 sm:mb-6">
+            <h1 class="text-3xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-amber-400 to-yellow-600 tracking-widest drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]">
+                BLACKJACK ONLINE
+            </h1>
+            <p class="text-[10px] text-yellow-500/80 font-semibold uppercase tracking-widest mt-1">LOCAL MULTIPLAYER & AI DEALER</p>
+        </div>
+
+        <!-- 1. Lobby Screen -->
+        <div id="screen-lobby" class="space-y-6 max-w-md mx-auto my-8">
+            
+            <!-- Local Play Section -->
+            <div class="bg-black/40 border border-yellow-600/30 rounded-2xl p-6 shadow-inner space-y-4 relative overflow-hidden">
+                <div class="absolute top-0 left-0 bg-yellow-600/20 text-yellow-500 text-[10px] font-bold px-3 py-1 rounded-br-lg">LOCAL</div>
+                <div>
+                    <label class="block text-xs font-bold text-yellow-500 mb-2 uppercase tracking-widest mt-2">プレイヤー1の名前</label>
+                    <input type="text" id="input-p1-name" placeholder="Player 1" value="Player 1" class="w-full bg-zinc-900 border border-yellow-600/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-yellow-500 mb-2 uppercase tracking-widest">プレイヤー2の名前</label>
+                    <input type="text" id="input-p2-name" placeholder="Player 2" value="Player 2" class="w-full bg-zinc-900 border border-yellow-600/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400 text-sm">
+                </div>
+
+                <div class="pt-2">
+                    <button onclick="startGameLocal()" class="w-full px-4 py-3 bg-gradient-to-b from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-neutral-950 font-black rounded-xl text-sm transition shadow-md border-b-4 border-amber-900">
+                        <i class="fa-solid fa-play mr-1"></i> 2人プレイ開始 (ローカル)
+                    </button>
+                </div>
             </div>
-            <div class="cards-container" id="dealer-cards"></div>
-        </div>
 
-        <div class="message-area">
-            <div id="game-message" class="message-text"></div>
-        </div>
+            <!-- Online Play Section -->
+            <div class="bg-black/40 border border-blue-600/30 rounded-2xl p-6 shadow-inner space-y-4 relative overflow-hidden">
+                <div class="absolute top-0 left-0 bg-blue-600/20 text-blue-400 text-[10px] font-bold px-3 py-1 rounded-br-lg">ONLINE</div>
+                <div>
+                    <label class="block text-xs font-bold text-blue-400 mb-2 uppercase tracking-widest mt-2">あなたの名前</label>
+                    <input type="text" id="input-online-name" placeholder="Your Name" value="Player" class="w-full bg-zinc-900 border border-blue-600/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-400 text-sm">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button onclick="hostOnlineGame()" class="w-full px-3 py-3 bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white font-black rounded-xl text-xs transition shadow-md border-b-4 border-blue-900">
+                        <i class="fa-solid fa-server mr-1"></i> 部屋を作る
+                    </button>
+                    <button onclick="showJoinDialog()" class="w-full px-3 py-3 bg-gradient-to-b from-purple-500 to-purple-700 hover:from-purple-400 hover:to-purple-600 text-white font-black rounded-xl text-xs transition shadow-md border-b-4 border-purple-900">
+                        <i class="fa-solid fa-right-to-bracket mr-1"></i> 部屋に参加
+                    </button>
+                </div>
 
-        <!-- Player Area -->
-        <div class="hand-area">
-            <div class="hand-title">
-                Player <span class="score-badge" id="player-score">0</span>
+                <div id="host-info" class="hidden mt-4 p-3 bg-zinc-900/80 border border-blue-500/30 rounded-xl text-center">
+                    <p class="text-[10px] text-gray-400 mb-1">あなたの招待コード</p>
+                    <div class="flex items-center justify-center gap-2">
+                        <span id="my-peer-id" class="text-sm font-mono font-bold text-blue-300 tracking-wider">------</span>
+                        <button onclick="copyPeerId()" class="text-gray-400 hover:text-white transition"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                    <p class="text-[10px] text-yellow-400 mt-2 animate-pulse" id="host-status-msg">対戦相手を待機中...</p>
+                </div>
+
+                <div id="join-info" class="hidden mt-4 space-y-2">
+                    <input type="text" id="input-join-id" placeholder="招待コードを入力" class="w-full bg-zinc-900 border border-purple-600/50 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-400 text-xs font-mono">
+                    <button onclick="joinOnlineGame()" class="w-full px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs transition">
+                        接続する
+                    </button>
+                    <p class="text-[10px] text-center text-yellow-400 mt-1" id="join-status-msg"></p>
+                </div>
             </div>
-            <div class="cards-container" id="player-cards"></div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="showStats()" class="px-4 py-3 bg-zinc-800/80 hover:bg-zinc-700 border border-white/10 text-yellow-400 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-chart-simple"></i> 戦績を見る
+                </button>
+                <button onclick="showRankings()" class="px-4 py-3 bg-zinc-800/80 hover:bg-zinc-700 border border-white/10 text-yellow-400 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-ranking-star"></i> ランキングを見る
+                </button>
+            </div>
         </div>
 
-        <div class="controls">
-            <button class="btn btn-hit" id="btn-hit" onclick="hit()">ヒット</button>
-            <button class="btn btn-stand" id="btn-stand" onclick="stand()">スタンド</button>
-            <button class="btn" id="btn-rematch" onclick="startGame()" style="display: none;">もう一度プレイ</button>
+        <!-- 2. Game Screen -->
+        <div id="screen-game" class="hidden space-y-4 sm:space-y-6">
+            <div class="flex justify-center gap-4 mb-4 text-center">
+                <div class="bg-black/50 border border-yellow-600/30 rounded-xl p-2 shadow-inner px-6">
+                    <span class="block text-[10px] sm:text-xs text-gray-400 font-bold">現在のターン</span>
+                    <span class="text-xs sm:text-sm font-bold text-yellow-500" id="game-turn-display">----</span>
+                </div>
+            </div>
+
+            <!-- Dealer -->
+            <div class="bg-black/20 rounded-2xl p-3 sm:p-4 border border-white/5 relative">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs sm:text-sm font-semibold text-gray-300 tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-user-tie text-yellow-500"></i> DEALER (AI)
+                    </span>
+                    <span class="px-3 py-1 bg-black/60 rounded-full text-xs font-bold text-yellow-400 border border-yellow-600/30">
+                        SCORE: <span id="dealer-score">?</span>
+                    </span>
+                </div>
+                <div id="dealer-hand" class="flex flex-wrap items-center justify-center min-h-[120px]"></div>
+            </div>
+
+            <!-- Players -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-black/20 rounded-2xl p-3 sm:p-4 border border-white/5 relative" id="p1-area">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs sm:text-sm font-semibold text-gray-300 tracking-wider flex items-center gap-1" id="p1-title-label">
+                            <i class="fa-solid fa-user text-emerald-400"></i> <span id="p1-name-display">PLAYER 1</span>
+                        </span>
+                        <span class="px-3 py-1 bg-black/60 rounded-full text-xs font-bold text-emerald-400 border border-emerald-600/30">
+                            SCORE: <span id="p1-score">0</span>
+                        </span>
+                    </div>
+                    <div id="p1-hand" class="flex flex-wrap items-center justify-center min-h-[120px]"></div>
+                </div>
+
+                <div class="bg-black/20 rounded-2xl p-3 sm:p-4 border border-white/5 relative" id="p2-area">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs sm:text-sm font-semibold text-gray-300 tracking-wider flex items-center gap-1" id="p2-title-label">
+                            <i class="fa-solid fa-user text-blue-400"></i> <span id="p2-name-display">PLAYER 2</span>
+                        </span>
+                        <span class="px-3 py-1 bg-black/60 rounded-full text-xs font-bold text-blue-400 border border-blue-600/30">
+                            SCORE: <span id="p2-score">0</span>
+                        </span>
+                    </div>
+                    <div id="p2-hand" class="flex flex-wrap items-center justify-center min-h-[120px]"></div>
+                </div>
+            </div>
+
+            <!-- Message -->
+            <div class="text-center h-8 sm:h-10 flex items-center justify-center">
+                <div id="game-message" class="text-sm sm:text-lg font-bold text-yellow-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"></div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-center gap-3 pt-2">
+                <button id="hit-btn" onclick="handleHit()" disabled class="px-8 py-3 bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white rounded-full transition font-black shadow-md border-b-4 border-blue-900 disabled:opacity-40 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-hand-fist mr-1"></i> ヒット
+                </button>
+                <button id="stand-btn" onclick="handleStand()" disabled class="px-8 py-3 bg-gradient-to-b from-red-500 to-red-700 hover:from-red-400 hover:to-red-600 text-white rounded-full transition font-black shadow-md border-b-4 border-red-900 disabled:opacity-40 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-hand mr-1"></i> スタンド
+                </button>
+                <button id="rematch-btn" onclick="handleRematch()" class="hidden px-8 py-3 bg-gradient-to-b from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white rounded-full transition font-black shadow-md border-b-4 border-emerald-900 animate-bounce">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> 再戦する
+                </button>
+            </div>
+
+            <div class="text-center pt-4">
+                <button onclick="exitToLobby()" class="text-gray-400 hover:text-white text-xs underline transition">
+                    ゲームを退出してロビーに戻る
+                </button>
+            </div>
         </div>
+
+        <!-- 3. Stats Screen -->
+        <div id="screen-stats" class="hidden space-y-6 my-4">
+            <div class="flex justify-between items-center border-b border-yellow-600/30 pb-4">
+                <h2 class="text-xl sm:text-2xl font-bold text-yellow-400 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-line"></i> 戦績 ＆ ランキング情報
+                </h2>
+                <button onclick="exitToLobby()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded-xl transition">
+                    ロビーへ戻る
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Personal Stats -->
+                <div class="bg-black/40 border border-yellow-600/20 rounded-2xl p-4 sm:p-6 space-y-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <input type="text" id="stats-search-name" placeholder="検索する名前" class="w-full bg-zinc-900 border border-yellow-600/50 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-yellow-400 text-xs">
+                        <button onclick="searchStats()" class="px-3 py-2 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-xl text-xs transition">検索</button>
+                    </div>
+                    <h3 class="text-sm font-bold text-yellow-500 uppercase tracking-widest border-b border-white/5 pb-2">個人統計 (プレイヤー: <span id="stats-player-name">-</span>)</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-zinc-900/60 p-3 rounded-xl text-center">
+                            <span class="block text-[10px] text-gray-400 font-bold">総対戦数</span>
+                            <span class="text-lg font-black text-white" id="stat-total">0</span>
+                        </div>
+                        <div class="bg-zinc-900/60 p-3 rounded-xl text-center">
+                            <span class="block text-[10px] text-gray-400 font-bold">勝率</span>
+                            <span class="text-lg font-black text-emerald-400" id="stat-rate">0%</span>
+                        </div>
+                        <div class="bg-zinc-900/60 p-2 rounded-xl text-center text-xs">
+                            <span class="block text-[9px] text-gray-400 font-semibold">勝利 / 敗北 / 分</span>
+                            <span class="font-bold text-white"><span class="text-emerald-400" id="stat-wins">0</span> / <span class="text-red-400" id="stat-losses">0</span> / <span class="text-gray-400" id="stat-draws">0</span></span>
+                        </div>
+                        <div class="bg-zinc-900/60 p-2 rounded-xl text-center text-xs">
+                            <span class="block text-[9px] text-gray-400 font-semibold">BJ / バスト</span>
+                            <span class="font-bold text-white"><span class="text-amber-400" id="stat-bj">0</span> / <span class="text-purple-400" id="stat-bust">0</span></span>
+                        </div>
+                    </div>
+                    <div class="pt-4 h-48 flex justify-center items-center">
+                        <canvas id="winRateChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Match History -->
+                <div class="bg-black/40 border border-yellow-600/20 rounded-2xl p-4 sm:p-6 lg:col-span-2 space-y-4">
+                    <h3 class="text-sm font-bold text-yellow-500 uppercase tracking-widest border-b border-white/5 pb-2">直近20試合の対戦履歴</h3>
+                    <div class="max-h-[360px] overflow-y-auto pr-2 space-y-2" id="history-list">
+                        <div class="text-center text-gray-500 py-8">履歴はありません。</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rankings -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-yellow-600/20">
+                <div class="bg-black/40 border border-yellow-600/20 rounded-2xl p-4 sm:p-6 space-y-4">
+                    <h3 class="text-sm font-bold text-yellow-500 uppercase tracking-widest border-b border-white/5 pb-2">
+                        <i class="fa-solid fa-trophy text-amber-400 mr-1"></i> 勝利数ランキング TOP 10
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="text-gray-400 border-b border-white/10">
+                                    <th class="py-2">順位</th>
+                                    <th class="py-2">プレイヤー名</th>
+                                    <th class="py-2">勝利数</th>
+                                    <th class="py-2">勝率</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ranking-wins-body" class="divide-y divide-white/5"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-black/40 border border-yellow-600/20 rounded-2xl p-4 sm:p-6 space-y-4">
+                    <h3 class="text-sm font-bold text-yellow-500 uppercase tracking-widest border-b border-white/5 pb-2">
+                        <i class="fa-solid fa-percent text-emerald-400 mr-1"></i> 勝率ランキング TOP 10 (3試合以上)
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="text-gray-400 border-b border-white/10">
+                                    <th class="py-2">順位</th>
+                                    <th class="py-2">プレイヤー名</th>
+                                    <th class="py-2">勝率</th>
+                                    <th class="py-2">試合数</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ranking-rates-body" class="divide-y divide-white/5"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
-</div>
 
-<!-- Reusable SVG Definitions for Face Cards -->
-<svg width="0" height="0" style="position:absolute;">
-    <defs>
-        <!-- Gradients -->
-        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#fef08a" />
-            <stop offset="50%" stop-color="#eab308" />
-            <stop offset="100%" stop-color="#a16207" />
-        </linearGradient>
-        <linearGradient id="bladeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#e2e8f0" />
-            <stop offset="50%" stop-color="#ffffff" />
-            <stop offset="100%" stop-color="#94a3b8" />
-        </linearGradient>
+    <!-- Mute Control -->
+    <div class="mt-4 flex gap-4 text-xs text-emerald-300/80 font-semibold select-none">
+        <button onclick="toggleMute()" class="hover:text-white flex items-center gap-1">
+            <i id="mute-icon" class="fa-solid fa-volume-high"></i> <span id="mute-text">サウンド：ON</span>
+        </button>
+    </div>
 
-        <!-- Base Suit Symbols -->
-        <g id="suit-spade"><path d="M50,20 C50,20 20,50 20,65 C20,80 40,80 45,70 C45,70 45,90 35,90 L65,90 C55,90 55,70 55,70 C60,80 80,80 80,65 C80,50 50,20 50,20 Z" /></g>
-        <g id="suit-heart"><path d="M50,85 C50,85 10,50 10,30 C10,10 40,10 50,30 C60,10 90,10 90,30 C90,50 50,85 50,85 Z" /></g>
-        <g id="suit-diamond"><path d="M50,10 L85,50 L50,90 L15,50 Z" /></g>
-        <g id="suit-club"><circle cx="50" cy="30" r="18"/><circle cx="25" cy="60" r="18"/><circle cx="75" cy="60" r="18"/><path d="M45,60 C45,60 45,90 35,90 L65,90 C55,90 55,60 55,60 Z"/></g>
+    <script>
+        // --- Sound Engine ---
+        let audioCtx = null;
+        let isMuted = false;
 
-        <!-- === KING SVG === -->
-        <g id="king-half">
-            <!-- Background Decoration -->
-            <rect x="0" y="0" width="100" height="75" fill="#fef9c3" />
-            <path d="M0,0 L100,75 M100,0 L0,75" stroke="rgba(0,0,0,0.1)" stroke-width="0.5"/>
-            <!-- Robe -->
-            <path d="M5,75 C20,20 80,20 95,75 Z" fill="var(--red)" class="svg-line" />
-            <path d="M20,75 C30,35 70,35 80,75 Z" fill="var(--black)" class="svg-line" />
-            <!-- Gold Collar -->
-            <path d="M30,50 L50,65 L70,50 L65,40 L35,40 Z" fill="url(#goldGrad)" class="svg-line" />
-            <!-- Face -->
-            <path d="M38,48 C38,68 62,68 62,48 C62,30 38,30 38,48 Z" class="svg-skin svg-line" />
-            <!-- Beard -->
-            <path d="M36,45 C36,68 50,80 64,45 C55,50 45,50 36,45 Z" fill="#d1d5db" class="svg-line" />
-            <!-- Mustache -->
-            <path d="M45,54 Q50,49 55,54 Q50,58 45,54 Z" fill="#9ca3af" />
-            <!-- Eyes -->
-            <line x1="42" y1="42" x2="47" y2="42" stroke="#000" stroke-width="1.5"/>
-            <line x1="53" y1="42" x2="58" y2="42" stroke="#000" stroke-width="1.5"/>
-            <!-- Crown -->
-            <path d="M33,30 L38,10 L50,22 L62,10 L67,30 Z" fill="url(#goldGrad)" class="svg-line" />
-            <circle cx="38" cy="10" r="2.5" fill="var(--red)"/>
-            <circle cx="50" cy="22" r="2.5" fill="var(--black)"/>
-            <circle cx="62" cy="10" r="2.5" fill="var(--red)"/>
-            <!-- Sword -->
-            <path d="M85,75 L85,25 L90,20 L95,25 L95,75 Z" fill="url(#bladeGrad)" class="svg-line" />
-            <rect x="78" y="55" width="24" height="4" fill="url(#goldGrad)" class="svg-line" />
-            <rect x="87" y="55" width="6" height="20" fill="url(#goldGrad)" class="svg-line" />
-            <!-- Hand -->
-            <circle cx="90" cy="62" r="6" class="svg-skin svg-line" />
-            <!-- Decoration -->
-            <circle cx="50" cy="55" r="4" fill="url(#goldGrad)" stroke="#000" stroke-width="0.5"/>
-        </g>
-        <g id="svg-king">
-            <use href="#king-half" />
-            <use href="#king-half" transform="rotate(180 50 75)" />
-            <line x1="0" y1="75" x2="100" y2="75" stroke="#000" stroke-width="1"/>
-        </g>
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
 
-        <!-- === QUEEN SVG === -->
-        <g id="queen-half">
-            <rect x="0" y="0" width="100" height="75" fill="#fdf2f8" />
-            <path d="M0,0 L100,75 M100,0 L0,75" stroke="rgba(0,0,0,0.1)" stroke-width="0.5"/>
-            <!-- Robe -->
-            <path d="M10,75 C25,25 75,25 90,75 Z" fill="var(--black)" class="svg-line" />
-            <path d="M25,75 C35,35 65,35 75,75 Z" fill="var(--red)" class="svg-line" />
-            <!-- Dress collar -->
-            <path d="M38,55 Q50,75 62,55 Z" fill="url(#goldGrad)" class="svg-line" />
-            <!-- Hair -->
-            <path d="M35,55 C28,25 50,5 72,35 C78,48 68,58 65,55 C65,55 55,25 50,25 C45,25 35,55 35,55 Z" fill="#78350f" class="svg-line" />
-            <!-- Face -->
-            <path d="M42,48 C42,65 58,65 58,48 C58,35 42,35 42,48 Z" class="svg-skin svg-line" />
-            <!-- Eyes & Lips -->
-            <path d="M44,43 Q46,40 48,43" stroke="#000" fill="none" stroke-width="1.2"/>
-            <path d="M52,43 Q54,40 56,43" stroke="#000" fill="none" stroke-width="1.2"/>
-            <path d="M48,52 Q50,55 52,52" stroke="var(--red)" fill="none" stroke-width="2"/>
-            <!-- Crown -->
-            <path d="M40,25 L45,15 L50,20 L55,15 L60,25 Z" fill="url(#goldGrad)" class="svg-line" />
-            <circle cx="50" cy="12" r="2.5" fill="var(--red)" />
-            <!-- Flower -->
-            <path d="M15,75 L15,45" stroke="#15803d" stroke-width="2.5" fill="none" />
-            <path d="M5,40 Q15,25 25,40 Q15,55 5,40 Z" fill="url(#goldGrad)" class="svg-line" />
-            <circle cx="15" cy="40" r="3.5" fill="var(--red)" />
-            <path d="M15,45 Q28,55 15,65" stroke="#15803d" stroke-width="1.5" fill="none" />
-            <!-- Hand -->
-            <circle cx="15" cy="65" r="5" class="svg-skin svg-line" />
-            <!-- Necklace -->
-            <path d="M42,55 Q50,60 58,55" stroke="var(--gold)" fill="none" stroke-width="1.5" />
-            <circle cx="50" cy="58" r="2" fill="var(--red)" />
-        </g>
-        <g id="svg-queen">
-            <use href="#queen-half" />
-            <use href="#queen-half" transform="rotate(180 50 75)" />
-            <line x1="0" y1="75" x2="100" y2="75" stroke="#000" stroke-width="1"/>
-        </g>
+        function playSound(type) {
+            if (isMuted) return;
+            initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
 
-        <!-- === JACK SVG === -->
-        <g id="jack-half">
-            <rect x="0" y="0" width="100" height="75" fill="#f0fdf4" />
-            <path d="M0,0 L100,75 M100,0 L0,75" stroke="rgba(0,0,0,0.1)" stroke-width="0.5"/>
-            <!-- Robe -->
-            <path d="M15,75 C25,35 75,35 85,75 Z" fill="url(#goldGrad)" class="svg-line" />
-            <path d="M30,75 L40,45 L60,45 L70,75 Z" fill="var(--black)" class="svg-line" />
-            <!-- Collar -->
-            <path d="M35,45 L50,60 L65,45 Z" fill="var(--red)" class="svg-line" />
-            <!-- Face -->
-            <path d="M41,48 C41,66 59,66 59,48 C59,35 41,35 41,48 Z" class="svg-skin svg-line" />
-            <!-- Hair -->
-            <path d="M37,45 C33,20 67,20 63,45 C58,30 42,30 37,45 Z" fill="#fb923c" class="svg-line" />
-            <!-- Eyes -->
-            <circle cx="45" cy="45" r="1.5" fill="#000" />
-            <circle cx="55" cy="45" r="1.5" fill="#000" />
-            <!-- Hat -->
-            <path d="M33,32 Q50,12 67,32 L62,25 Q50,8 38,25 Z" fill="var(--red)" class="svg-line" />
-            <path d="M30,32 C45,38 55,38 70,32" stroke="var(--gold)" stroke-width="2" fill="none" />
-            <!-- Feather -->
-            <path d="M60,25 Q80,5 85,25 Q70,30 60,25 Z" fill="#38bdf8" class="svg-line" />
-            <!-- Dagger -->
-            <path d="M12,75 L12,40 L16,35 L20,40 L20,75 Z" fill="url(#bladeGrad)" class="svg-line" />
-            <rect x="6" y="60" width="20" height="3" fill="url(#goldGrad)" class="svg-line" />
-            <circle cx="16" cy="65" r="5" class="svg-skin svg-line" />
-        </g>
-        <g id="svg-jack">
-            <use href="#jack-half" />
-            <use href="#jack-half" transform="rotate(180 50 75)" />
-            <line x1="0" y1="75" x2="100" y2="75" stroke="#000" stroke-width="1"/>
-        </g>
-
-    </defs>
-</svg>
-
-<script>
-// --- Game Logic ---
-let deck = [];
-let playerHand = [];
-let dealerHand = [];
-let gameState = 'START'; // START, PLAYER_TURN, DEALER_TURN, END
-
-const suits = ['spade', 'heart', 'diamond', 'club'];
-const suitSymbols = { 'spade': '♠', 'heart': '♥', 'diamond': '♦', 'club': '♣' };
-const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-
-function createDeck() {
-    let newDeck = [];
-    for (let i = 0; i < 4; i++) { // 4 decks for standard shoe
-        for (let suit of suits) {
-            for (let rank of ranks) {
-                let value = parseInt(rank);
-                if (['J', 'Q', 'K'].includes(rank)) value = 10;
-                if (rank === 'A') value = 11;
-                newDeck.push({ suit, rank, value });
+            if (type === 'deal') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(320, now); osc.frequency.exponentialRampToValueAtTime(950, now + 0.12);
+                gain.gain.setValueAtTime(0.12, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                osc.start(now); osc.stop(now + 0.12);
+            } else if (type === 'chip') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(1700, now); osc.frequency.exponentialRampToValueAtTime(2900, now + 0.07);
+                gain.gain.setValueAtTime(0.18, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.07);
+                osc.start(now); osc.stop(now + 0.07);
+            } else if (type === 'flip') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(200, now); osc.frequency.setValueAtTime(120, now + 0.06);
+                gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now); osc.stop(now + 0.08);
+            } else if (type === 'win') {
+                playNote(523.25, 0.12); setTimeout(() => playNote(659.25, 0.12), 100); setTimeout(() => playNote(783.99, 0.12), 200); setTimeout(() => playNote(1046.50, 0.28), 300);
+            } else if (type === 'lose') {
+                playNote(220.00, 0.22); setTimeout(() => playNote(196.00, 0.22), 150); setTimeout(() => playNote(164.81, 0.42), 300);
+            } else if (type === 'bj') {
+                playNote(523.25, 0.08); setTimeout(() => playNote(659.25, 0.08), 80); setTimeout(() => playNote(783.99, 0.08), 160); setTimeout(() => playNote(1046.50, 0.08), 240); setTimeout(() => playNote(1318.51, 0.45), 320);
             }
         }
-    }
-    // Shuffle
-    for (let i = newDeck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newDeck[i], newDeck[j]] = [newDeck[j], newDeck[i]];
-    }
-    return newDeck;
-}
 
-function calculateScore(hand, revealAll = true) {
-    let score = 0;
-    let aces = 0;
-    for (let i = 0; i < hand.length; i++) {
-        if (!revealAll && i === 1) continue; // Skip hole card if not revealing
-        const card = hand[i];
-        score += card.value;
-        if (card.rank === 'A') aces++;
-    }
-    while (score > 21 && aces > 0) {
-        score -= 10;
-        aces--;
-    }
-    return score;
-}
-
-function startGame() {
-    document.getElementById('screen-start').classList.remove('active');
-    document.getElementById('screen-game').classList.add('active');
-    
-    deck = createDeck();
-    playerHand = [];
-    dealerHand = [];
-    gameState = 'PLAYER_TURN';
-    
-    // Clear DOM
-    document.getElementById('player-cards').innerHTML = '';
-    document.getElementById('dealer-cards').innerHTML = '';
-    updateMessage('');
-    document.getElementById('btn-hit').style.display = 'flex';
-    document.getElementById('btn-hit').disabled = false;
-    document.getElementById('btn-stand').style.display = 'flex';
-    document.getElementById('btn-stand').disabled = false;
-    document.getElementById('btn-rematch').style.display = 'none';
-
-    // Initial Deal (Only animate the new cards)
-    setTimeout(() => dealCard(playerHand, 'player-cards', true, true), 100);
-    setTimeout(() => dealCard(dealerHand, 'dealer-cards', true, true), 300);
-    setTimeout(() => dealCard(playerHand, 'player-cards', true, true), 500);
-    setTimeout(() => dealCard(dealerHand, 'dealer-cards', false, true), 700);
-    
-    setTimeout(checkInitialBlackjack, 1000);
-}
-
-function dealCard(hand, elementId, faceUp, animate = true) {
-    const card = deck.pop();
-    card.faceUp = faceUp;
-    hand.push(card);
-    renderCard(card, elementId, animate);
-    updateScores();
-}
-
-function renderCard(card, elementId, animate = false) {
-    const container = document.getElementById(elementId);
-    
-    const cardEl = document.createElement('div');
-    cardEl.className = 'card';
-    if (animate) cardEl.classList.add('animate-deal');
-    if (card.faceUp) cardEl.classList.add('flipped');
-
-    const inner = document.createElement('div');
-    inner.className = 'card-inner';
-
-    const back = document.createElement('div');
-    back.className = 'card-face card-back';
-
-    const front = document.createElement('div');
-    front.className = 'card-face card-front';
-    
-    const isRed = card.suit === 'heart' || card.suit === 'diamond';
-    const colorClass = isRed ? 'suit-red' : 'suit-black';
-    const symbol = suitSymbols[card.suit];
-
-    // Corners
-    const cornerHTML = `<div class="card-corner ${colorClass}"><span>${card.rank}</span><span style="font-size:14px; margin-top:-2px;">${symbol}</span></div>`;
-    
-    // Center Content
-    let centerHTML = '';
-    if (['J', 'Q', 'K'].includes(card.rank)) {
-        let svgId = '';
-        if (card.rank === 'J') svgId = 'svg-jack';
-        if (card.rank === 'Q') svgId = 'svg-queen';
-        if (card.rank === 'K') svgId = 'svg-king';
-        
-        centerHTML = `
-            <div class="card-center">
-                <div class="face-card-container">
-                    <svg viewBox="0 0 100 150" width="100%" height="100%" preserveAspectRatio="none">
-                        <use href="#${svgId}" transform="scale(1, 2)" />
-                        <!-- Suit overlays inside face card border -->
-                        <use href="#suit-${card.suit}" x="5" y="5" width="15" height="15" class="${colorClass === 'suit-red' ? 'svg-red' : 'svg-black'}" />
-                        <use href="#suit-${card.suit}" x="80" y="130" width="15" height="15" class="${colorClass === 'suit-red' ? 'svg-red' : 'svg-black'}" transform="rotate(180 87.5 137.5)" />
-                    </svg>
-                </div>
-            </div>`;
-    } else if (card.rank === 'A') {
-        centerHTML = `<div class="card-center"><svg viewBox="0 0 100 100" width="50" height="50" class="${colorClass === 'suit-red' ? 'svg-red' : 'svg-black'}"><use href="#suit-${card.suit}"/></svg></div>`;
-    } else {
-        centerHTML = `<div class="card-center"><svg viewBox="0 0 100 100" width="30" height="30" class="${colorClass === 'suit-red' ? 'svg-red' : 'svg-black'}"><use href="#suit-${card.suit}"/></svg></div>`;
-    }
-
-    front.innerHTML = `
-        <div class="top-left">${cornerHTML}</div>
-        ${centerHTML}
-        <div class="bottom-right">${cornerHTML}</div>
-    `;
-
-    inner.appendChild(back);
-    inner.appendChild(front);
-    cardEl.appendChild(inner);
-    container.appendChild(cardEl);
-}
-
-function updateScores() {
-    const pScore = calculateScore(playerHand, true);
-    document.getElementById('player-score').innerText = pScore;
-    
-    const revealDealer = gameState !== 'PLAYER_TURN';
-    const dScore = calculateScore(dealerHand, revealDealer);
-    document.getElementById('dealer-score').innerText = revealDealer ? dScore : '?';
-}
-
-function checkInitialBlackjack() {
-    const pScore = calculateScore(playerHand, true);
-    const dScoreAll = calculateScore(dealerHand, true);
-    
-    if (pScore === 21) {
-        if (dScoreAll === 21) {
-            revealDealerHoleCard();
-            endGame('引き分け (Push) - 両者ブラックジャック');
-        } else {
-            endGame('ブラックジャック！ あなたの勝利！');
+        function playNote(freq, duration) {
+            if (isMuted) return;
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.12, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
         }
-    } else {
-        updateMessage('あなたのアクションを選択してください');
-    }
-}
 
-function hit() {
-    if (gameState !== 'PLAYER_TURN') return;
-    
-    // Only animate the new card
-    dealCard(playerHand, 'player-cards', true, true);
-    const pScore = calculateScore(playerHand, true);
-    
-    if (pScore > 21) {
-        endGame('バースト！ あなたの負けです...');
-    } else if (pScore === 21) {
-        stand();
-    }
-}
+        function toggleMute() {
+            isMuted = !isMuted;
+            const icon = document.getElementById('mute-icon');
+            const text = document.getElementById('mute-text');
+            if (isMuted) { icon.className = "fa-solid fa-volume-xmark"; text.innerText = "サウンド：OFF"; } 
+            else { icon.className = "fa-solid fa-volume-high"; text.innerText = "サウンド：ON"; playSound('chip'); }
+        }
 
-function stand() {
-    if (gameState !== 'PLAYER_TURN') return;
-    gameState = 'DEALER_TURN';
-    
-    document.getElementById('btn-hit').disabled = true;
-    document.getElementById('btn-stand').disabled = true;
-    
-    updateMessage('ディーラーのターン...');
-    revealDealerHoleCard();
-}
+        // --- Card Graphics Generator ---
+        const suitSVGs = {
+            '♠': (color) => `<svg viewBox="0 0 100 100" class="w-full h-full fill-current ${color}"><path d="M50,15 C55,38 78,44 78,58 C78,71 67,78 50,78 C33,78 22,71 22,58 C22,44 45,38 50,15 Z" /><path d="M50,70 L58,88 L42,88 Z" /></svg>`,
+            '♥': (color) => `<svg viewBox="0 0 100 100" class="w-full h-full fill-current ${color}"><path d="M50,30 C50,15 78,12 78,36 C78,60 50,85 50,88 C50,85 22,60 22,36 C22,12 50,15 50,30 Z" /></svg>`,
+            '♦': (color) => `<svg viewBox="0 0 100 100" class="w-full h-full fill-current ${color}"><path d="M50,14 L80,50 L50,86 L20,50 Z" /></svg>`,
+            '♣': (color) => `<svg viewBox="0 0 100 100" class="w-full h-full fill-current ${color}"><circle cx="50" cy="33" r="16" /><circle cx="34" cy="54" r="16" /><circle cx="66" cy="54" r="16" /><path d="M50,45 L58,85 L42,85 Z" /><circle cx="50" cy="50" r="10" /></svg>`
+        };
 
-function revealDealerHoleCard() {
-    // Flip the second card visually
-    dealerHand[1].faceUp = true;
-    const dealerCardsEl = document.getElementById('dealer-cards');
-    if(dealerCardsEl.children.length > 1) {
-        dealerCardsEl.children[1].classList.add('flipped');
-    }
-    updateScores();
-    
-    setTimeout(dealerPlay, 1000);
-}
+        function createCardHTML(card, index) {
+            if (card.rank === '?') {
+                return `<div class="card-container"><div class="card-inner"><div class="card-back"></div></div></div>`;
+            }
+            const isRed = card.suit === '♥' || card.suit === '♦';
+            const colorClass = isRed ? 'suit-red' : 'suit-black';
+            const suitSvgStr = suitSVGs[card.suit] ? suitSVGs[card.suit](colorClass) : '';
+            
+            const indexHTML = `<div class="card-corner ${colorClass}"><span class="font-bold text-xs">${card.rank}</span><span class="text-[10px] mt-0.5">${card.suit}</span></div>`;
+            
+            let centerDeco = '';
+            if (card.rank === 'A') {
+                centerDeco = `<div class="absolute inset-0 flex items-center justify-center p-2"><div class="relative w-10 h-10">${suitSvgStr}</div></div>`;
+            } else if (['J', 'Q', 'K'].includes(card.rank)) {
+                centerDeco = `<div class="absolute inset-[3px] border border-amber-600/30 rounded bg-[#fcfaf2] flex items-center justify-center"><div class="text-xl font-bold opacity-20 select-none">${card.rank}</div><div class="absolute w-8 h-8 opacity-10">${suitSvgStr}</div></div>`;
+            } else {
+                centerDeco = `<div class="absolute inset-0 flex items-center justify-center p-4"><div class="w-6 h-6">${suitSvgStr}</div></div>`;
+            }
 
-function dealerPlay() {
-    if (gameState !== 'DEALER_TURN') return;
-    
-    const dScore = calculateScore(dealerHand, true);
-    
-    if (dScore < 17) {
-        // Hit: Only animate the new card
-        dealCard(dealerHand, 'dealer-cards', true, true);
-        setTimeout(dealerPlay, 800);
-    } else {
-        evaluateWinner();
-    }
-}
+            return `<div class="card-container flipped deal-animate"><div class="card-inner"><div class="card-back"></div><div class="card-front text-left select-none relative"><div class="top-left">${indexHTML}</div>${centerDeco}<div class="bottom-right">${indexHTML}</div></div></div></div>`;
+        }
 
-function evaluateWinner() {
-    const pScore = calculateScore(playerHand, true);
-    const dScore = calculateScore(dealerHand, true);
-    
-    if (dScore > 21) {
-        endGame('ディーラーがバースト！ あなたの勝利！');
-    } else if (pScore > dScore) {
-        endGame('あなたの勝利！');
-    } else if (pScore < dScore) {
-        endGame('ディーラーの勝利...');
-    } else {
-        endGame('引き分け (Push)');
-    }
-}
+        // --- Network Engine (PeerJS) ---
+        let peer = null;
+        let conn = null;
+        let isOnline = false;
+        let isHost = false;
+        let myName = '';
+        let opponentName = '';
+        let myId = '';
 
-function endGame(msg) {
-    gameState = 'END';
-    updateMessage(`<span class="result-message">${msg}</span>`);
-    document.getElementById('btn-hit').style.display = 'none';
-    document.getElementById('btn-stand').style.display = 'none';
-    document.getElementById('btn-rematch').style.display = 'flex';
-    
-    // Auto flip dealer card if game ended due to bust before dealer turn
-    if (!dealerHand[1].faceUp) {
-        dealerHand[1].faceUp = true;
-        document.getElementById('dealer-cards').children[1].classList.add('flipped');
-        updateScores();
-    }
-}
+        function initPeer() {
+            if (peer) return;
+            peer = new Peer();
+            peer.on('open', id => {
+                myId = id;
+                document.getElementById('my-peer-id').innerText = id;
+            });
+            peer.on('connection', connection => {
+                if (conn) return;
+                conn = connection;
+                setupConnection();
+                document.getElementById('host-status-msg').innerText = "対戦相手が接続しました！";
+                setTimeout(() => {
+                    startGameOnline(true);
+                }, 1000);
+            });
+        }
 
-function updateMessage(html) {
-    document.getElementById('game-message').innerHTML = html;
-}
-</script>
+        function hostOnlineGame() {
+            playSound('chip');
+            myName = document.getElementById('input-online-name').value.trim() || 'Player 1';
+            opponentName = 'Player 2';
+            document.getElementById('host-info').classList.remove('hidden');
+            document.getElementById('join-info').classList.add('hidden');
+            initPeer();
+        }
+
+        function showJoinDialog() {
+            playSound('chip');
+            document.getElementById('join-info').classList.remove('hidden');
+            document.getElementById('host-info').classList.add('hidden');
+            initPeer();
+        }
+
+        function joinOnlineGame() {
+            playSound('chip');
+            myName = document.getElementById('input-online-name').value.trim() || 'Player 2';
+            const hostId = document.getElementById('input-join-id').value.trim();
+            if (!hostId) return;
+            
+            document.getElementById('join-status-msg').innerText = "接続中...";
+            if (!peer) initPeer();
+            
+            const tryConnect = () => {
+                if (!peer || !peer.id) { setTimeout(tryConnect, 100); return; }
+                conn = peer.connect(hostId);
+                conn.on('open', () => {
+                    document.getElementById('join-status-msg').innerText = "接続成功！ゲーム開始を待機中...";
+                    setupConnection();
+                    conn.send({ type: 'guest_join', name: myName });
+                });
+                conn.on('error', err => {
+                    document.getElementById('join-status-msg').innerText = "接続エラー";
+                });
+            };
+            tryConnect();
+        }
+
+        function copyPeerId() {
+            if (!myId) return;
+            navigator.clipboard.writeText(myId);
+            playSound('chip');
+        }
+
+        function setupConnection() {
+            conn.on('data', data => {
+                handleNetworkData(data);
+            });
+            conn.on('close', () => {
+                alert("通信が切断されました");
+                exitToLobby();
+            });
+        }
+
+        function handleNetworkData(data) {
+            if (data.type === 'guest_join') {
+                if (isHost) {
+                    opponentName = data.name;
+                    document.getElementById('host-status-msg').innerText = `${opponentName} が接続しました！`;
+                }
+            } else if (data.type === 'sync_state') {
+                gameState = data.gameState;
+                isOnline = true;
+                isHost = false;
+                
+                if (document.getElementById('screen-lobby').classList.contains('hidden') === false) {
+                    showScreen('screen-game');
+                    playSound('deal');
+                }
+                
+                if (data.event === 'flip') playSound('flip');
+                if (data.event === 'win') { playSound('win'); confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
+                if (data.event === 'lose') playSound('lose');
+                
+                updateUI(data.msg);
+                
+            } else if (data.type === 'action') {
+                if (isHost) {
+                    if (data.action === 'hit') localHit();
+                    if (data.action === 'stand') localStand();
+                    if (data.action === 'rematch') startGameOnline(true);
+                }
+            }
+        }
+
+        function syncState(msg, eventType = '') {
+            if (isOnline && isHost && conn && conn.open) {
+                conn.send({ type: 'sync_state', gameState: gameState, msg: msg, event: eventType });
+            }
+        }
+
+        // --- Game Engine ---
+        let gameState = {
+            state: 'LOBBY',
+            deck: [],
+            player1: { name: 'Player 1', hand: [], score: 0, bust: false, bj: false },
+            player2: { name: 'Player 2', hand: [], score: 0, bust: false, bj: false },
+            dealer: { hand: [], score: 0 },
+            turn: 'player1'
+        };
+
+        function showScreen(screenId) {
+            ['screen-lobby', 'screen-game', 'screen-stats'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function createDeck() {
+            const suits = ['♠', '♥', '♦', '♣'];
+            const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+            let deck = [];
+            for (let d = 0; d < 6; d++) {
+                for (let suit of suits) {
+                    for (let rank of ranks) {
+                        let value = parseInt(rank) || (rank === 'A' ? 11 : 10);
+                        deck.push({ suit, rank, value });
+                    }
+                }
+            }
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            return deck;
+        }
+
+        function getScore(hand) {
+            let score = 0, aces = 0;
+            for (let card of hand) {
+                if (card.rank === '?') continue;
+                score += card.value;
+                if (card.rank === 'A') aces++;
+            }
+            while (score > 21 && aces > 0) {
+                score -= 10;
+                aces--;
+            }
+            return score;
+        }
+
+        function startGameLocal() {
+            playSound('chip');
+            isOnline = false;
+            isHost = true;
+            const p1Name = document.getElementById('input-p1-name').value.trim() || 'Player 1';
+            const p2Name = document.getElementById('input-p2-name').value.trim() || 'Player 2';
+            initGame(p1Name, p2Name);
+        }
+
+        function startGameOnline(asHost) {
+            playSound('chip');
+            isOnline = true;
+            isHost = asHost;
+            if (isHost) {
+                initGame(myName, opponentName);
+            }
+        }
+
+        function initGame(p1, p2) {
+            gameState = {
+                state: 'GAME_ACTIVE',
+                deck: createDeck(),
+                player1: { name: p1, hand: [], score: 0, bust: false, bj: false },
+                player2: { name: p2, hand: [], score: 0, bust: false, bj: false },
+                dealer: { hand: [], score: 0 },
+                turn: 'player1'
+            };
+
+            gameState.player1.hand.push(gameState.deck.pop(), gameState.deck.pop());
+            gameState.player2.hand.push(gameState.deck.pop(), gameState.deck.pop());
+            gameState.dealer.hand.push(gameState.deck.pop(), { suit: '?', rank: '?', value: 0 });
+
+            updateScores();
+            
+            showScreen('screen-game');
+            playSound('deal');
+            
+            if (gameState.player1.score === 21) {
+                gameState.player1.bj = true;
+                updateUI('');
+                syncState('', 'deal');
+                setTimeout(nextTurn, 500);
+            } else {
+                let msg = `${gameState.player1.name} のターンです。`;
+                updateUI(msg);
+                syncState(msg, 'deal');
+            }
+        }
+
+        function updateScores() {
+            gameState.player1.score = getScore(gameState.player1.hand);
+            gameState.player2.score = getScore(gameState.player2.hand);
+            gameState.dealer.score = getScore(gameState.dealer.hand);
+        }
+
+        function handleHit() {
+            if (isOnline && !isHost) {
+                if (conn && conn.open) conn.send({ type: 'action', action: 'hit' });
+                playSound('chip');
+            } else {
+                localHit();
+            }
+        }
+
+        function handleStand() {
+            if (isOnline && !isHost) {
+                if (conn && conn.open) conn.send({ type: 'action', action: 'stand' });
+                playSound('chip');
+            } else {
+                localStand();
+            }
+        }
+
+        function handleRematch() {
+            if (isOnline && !isHost) {
+                if (conn && conn.open) conn.send({ type: 'action', action: 'rematch' });
+                playSound('chip');
+            } else if (isOnline && isHost) {
+                startGameOnline(true);
+            } else {
+                startGameLocal();
+            }
+        }
+
+        function localHit() {
+            if (gameState.state !== 'GAME_ACTIVE') return;
+            playSound('flip');
+            syncState('', 'flip');
+            
+            let activePlayer = gameState.turn === 'player1' ? gameState.player1 : gameState.player2;
+            activePlayer.hand.push(gameState.deck.pop());
+            updateScores();
+
+            if (activePlayer.score > 21) {
+                activePlayer.bust = true;
+                let msg = `${activePlayer.name} はバーストしました！`;
+                updateUI(msg);
+                syncState(msg);
+                setTimeout(nextTurn, 1000);
+            } else if (activePlayer.score === 21) {
+                updateUI('');
+                syncState('');
+                setTimeout(nextTurn, 500);
+            } else {
+                let msg = `${activePlayer.name} のターンです。`;
+                updateUI(msg);
+                syncState(msg);
+            }
+        }
+
+        function localStand() {
+            if (gameState.state !== 'GAME_ACTIVE') return;
+            playSound('chip');
+            nextTurn();
+        }
+
+        function nextTurn() {
+            if (gameState.turn === 'player1') {
+                gameState.turn = 'player2';
+                if (gameState.player2.score === 21) {
+                    gameState.player2.bj = true;
+                    updateUI('');
+                    syncState('');
+                    setTimeout(nextTurn, 1000);
+                } else {
+                    let msg = `${gameState.player2.name} のターンです。`;
+                    updateUI(msg);
+                    syncState(msg);
+                }
+            } else if (gameState.turn === 'player2') {
+                gameState.turn = 'dealer';
+                executeDealerTurn();
+            }
+        }
+
+        function executeDealerTurn() {
+            updateUI('ディーラーのターンです...');
+            syncState('ディーラーのターンです...');
+            // Reveal hole card
+            gameState.dealer.hand[1] = gameState.deck.pop(); 
+            updateScores();
+            updateUI('ディーラーのターンです...');
+            syncState('ディーラーのターンです...');
+
+            let dealLoop = setInterval(() => {
+                if (gameState.dealer.score < 17) {
+                    gameState.dealer.hand.push(gameState.deck.pop());
+                    updateScores();
+                    playSound('flip');
+                    updateUI('ディーラーがカードを引いています...');
+                    syncState('ディーラーがカードを引いています...', 'flip');
+                } else {
+                    clearInterval(dealLoop);
+                    finishGame();
+                }
+            }, 800);
+        }
+
+        function finishGame() {
+            gameState.state = 'GAME_RESULT';
+            let dScore = gameState.dealer.score;
+            let dBust = dScore > 21;
+
+            let p1Result = evaluateResult(gameState.player1, dScore, dBust);
+            let p2Result = evaluateResult(gameState.player2, dScore, dBust);
+
+            saveStats(gameState.player1.name, p1Result, gameState.player1);
+            saveStats(gameState.player2.name, p2Result, gameState.player2);
+            saveMatchHistory(gameState.player1, gameState.player2, gameState.dealer, p1Result, p2Result);
+
+            let event = '';
+            if (p1Result === 'win' || p2Result === 'win' || p1Result === 'bj' || p2Result === 'bj') {
+                playSound('win');
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                event = 'win';
+            } else if (p1Result === 'lose' && p2Result === 'lose') {
+                playSound('lose');
+                event = 'lose';
+            } else {
+                playSound('chip');
+            }
+
+            updateUI('ゲーム終了！');
+            syncState('ゲーム終了！', event);
+        }
+
+        function evaluateResult(player, dScore, dBust) {
+            if (player.bust) return 'lose';
+            if (dBust) return player.bj ? 'bj' : 'win';
+            if (player.score > dScore) return player.bj ? 'bj' : 'win';
+            if (player.score < dScore) return 'lose';
+            return 'draw';
+        }
+
+        function updateUI(msg) {
+            // Render Hands
+            document.getElementById('p1-name-display').innerText = gameState.player1.name;
+            document.getElementById('p2-name-display').innerText = gameState.player2.name;
+
+            document.getElementById('p1-score').innerText = gameState.player1.score;
+            document.getElementById('p2-score').innerText = gameState.player2.score;
+            document.getElementById('dealer-score').innerText = gameState.state === 'GAME_RESULT' ? gameState.dealer.score : '?';
+
+            document.getElementById('p1-hand').innerHTML = gameState.player1.hand.map((c, i) => createCardHTML(c, i)).join('');
+            document.getElementById('p2-hand').innerHTML = gameState.player2.hand.map((c, i) => createCardHTML(c, i)).join('');
+            document.getElementById('dealer-hand').innerHTML = gameState.dealer.hand.map((c, i) => createCardHTML(c, i)).join('');
+
+            // Highlight Turn
+            let turnText = '';
+            document.getElementById('p1-area').classList.remove('border-yellow-500/40', 'bg-yellow-500/5');
+            document.getElementById('p2-area').classList.remove('border-yellow-500/40', 'bg-yellow-500/5');
+
+            if (gameState.state === 'GAME_ACTIVE') {
+                if (gameState.turn === 'player1') {
+                    turnText = `${gameState.player1.name}のターン`;
+                    document.getElementById('p1-area').classList.add('border-yellow-500/40', 'bg-yellow-500/5');
+                } else if (gameState.turn === 'player2') {
+                    turnText = `${gameState.player2.name}のターン`;
+                    document.getElementById('p2-area').classList.add('border-yellow-500/40', 'bg-yellow-500/5');
+                } else {
+                    turnText = 'ディーラーのターン';
+                }
+                
+                // If online, disable buttons if it's not our turn
+                if (isOnline) {
+                    let isMyTurn = (isHost && gameState.turn === 'player1') || (!isHost && gameState.turn === 'player2');
+                    document.getElementById('hit-btn').disabled = !isMyTurn;
+                    document.getElementById('stand-btn').disabled = !isMyTurn;
+                } else {
+                    document.getElementById('hit-btn').disabled = false;
+                    document.getElementById('stand-btn').disabled = false;
+                }
+                document.getElementById('rematch-btn').classList.add('hidden');
+            } else {
+                turnText = 'ゲーム結果';
+                document.getElementById('hit-btn').disabled = true;
+                document.getElementById('stand-btn').disabled = true;
+                document.getElementById('rematch-btn').classList.remove('hidden');
+            }
+
+            document.getElementById('game-turn-display').innerText = turnText;
+            if (msg) document.getElementById('game-message').innerText = msg;
+        }
+
+        function exitToLobby() {
+            if (conn) {
+                conn.close();
+                conn = null;
+            }
+            if (peer) {
+                peer.destroy();
+                peer = null;
+            }
+            isOnline = false;
+            isHost = false;
+            document.getElementById('host-info').classList.add('hidden');
+            document.getElementById('join-info').classList.add('hidden');
+            document.getElementById('host-status-msg').innerText = "対戦相手を待機中...";
+            document.getElementById('join-status-msg').innerText = "";
+            playSound('flip');
+            showScreen('screen-lobby');
+        }
+
+        // --- LocalStorage DB System ---
+        function getDB() {
+            let db = localStorage.getItem('blackjack_db');
+            if (!db) {
+                return { players: {}, history: [] };
+            }
+            return JSON.parse(db);
+        }
+
+        function saveDB(db) {
+            localStorage.setItem('blackjack_db', JSON.stringify(db));
+        }
+
+        function saveStats(playerName, result, playerObj) {
+            let db = getDB();
+            if (!db.players[playerName]) {
+                db.players[playerName] = { wins: 0, losses: 0, draws: 0, bj: 0, bust: 0 };
+            }
+            let p = db.players[playerName];
+            if (result === 'win' || result === 'bj') p.wins++;
+            if (result === 'lose') p.losses++;
+            if (result === 'draw') p.draws++;
+            if (result === 'bj') p.bj++;
+            if (playerObj.bust) p.bust++;
+            saveDB(db);
+        }
+
+        function saveMatchHistory(p1, p2, dealer, res1, res2) {
+            let db = getDB();
+            let date = new Date().toLocaleString('ja-JP');
+            db.history.unshift({
+                date,
+                p1Name: p1.name, p2Name: p2.name,
+                p1Score: p1.score, p2Score: p2.score,
+                dScore: dealer.score,
+                p1Result: res1, p2Result: res2
+            });
+            if (db.history.length > 100) db.history.pop();
+            saveDB(db);
+        }
+
+        let winRateChartInstance = null;
+
+        function searchStats() {
+            let name = document.getElementById('stats-search-name').value.trim();
+            if(!name) {
+                alert('名前を入力してください');
+                return;
+            }
+            loadPlayerStats(name);
+        }
+
+        function showStats() {
+            playSound('chip');
+            let p1Name = document.getElementById('input-p1-name').value.trim() || 'Player 1';
+            document.getElementById('stats-search-name').value = p1Name;
+            showScreen('screen-stats');
+            loadPlayerStats(p1Name);
+            loadRankings();
+        }
+
+        function showRankings() {
+            playSound('chip');
+            showScreen('screen-stats');
+            document.getElementById('stats-search-name').value = '';
+            loadPlayerStats('');
+            loadRankings();
+        }
+
+        function loadPlayerStats(playerName) {
+            let db = getDB();
+            let p = db.players[playerName] || { wins: 0, losses: 0, draws: 0, bj: 0, bust: 0 };
+            document.getElementById('stats-player-name').innerText = playerName || '-';
+            
+            let total = p.wins + p.losses + p.draws;
+            let rate = total > 0 ? ((p.wins / total) * 100).toFixed(1) : '0.0';
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-rate').innerText = rate + '%';
+            document.getElementById('stat-wins').innerText = p.wins;
+            document.getElementById('stat-losses').innerText = p.losses;
+            document.getElementById('stat-draws').innerText = p.draws;
+            document.getElementById('stat-bj').innerText = p.bj;
+            document.getElementById('stat-bust').innerText = p.bust;
+
+            // Chart
+            const ctx = document.getElementById('winRateChart').getContext('2d');
+            if (winRateChartInstance) winRateChartInstance.destroy();
+            
+            if (total === 0) {
+                winRateChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: { labels: ['データなし'], datasets: [{ data: [1], backgroundColor: ['#3f3f46'] }] },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            } else {
+                winRateChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['勝利', '敗北', '引き分け'],
+                        datasets: [{
+                            data: [p.wins, p.losses, p.draws],
+                            backgroundColor: ['#10b981', '#ef4444', '#71717a'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#e4e4e7', font: { size: 10 } } } } }
+                });
+            }
+
+            // History
+            let list = document.getElementById('history-list');
+            let myHistory = db.history.filter(h => h.p1Name === playerName || h.p2Name === playerName).slice(0, 20);
+            if (myHistory.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-500 py-8">履歴はありません。</div>';
+            } else {
+                list.innerHTML = myHistory.map(m => {
+                    let isP1 = m.p1Name === playerName;
+                    let opponent = isP1 ? m.p2Name : m.p1Name;
+                    let myResult = isP1 ? m.p1Result : m.p2Result;
+                    let myScore = isP1 ? m.p1Score : m.p2Score;
+                    let oppScore = isP1 ? m.p2Score : m.p1Score;
+
+                    let resText = '引き分け'; let resClass = 'text-gray-400';
+                    if (myResult === 'win' || myResult === 'bj') { resText = '勝利'; resClass = 'text-emerald-400 font-bold'; }
+                    if (myResult === 'lose') { resText = '敗北'; resClass = 'text-red-400'; }
+
+                    return `
+                        <div class="bg-zinc-900/60 p-3 rounded-xl flex flex-wrap justify-between items-center text-xs">
+                            <div class="space-y-1">
+                                <div class="text-[10px] text-gray-500">${m.date}</div>
+                                <div class="font-bold text-gray-200">VS ${opponent}</div>
+                            </div>
+                            <div class="text-center"><span class="${resClass}">${resText}</span></div>
+                            <div class="text-right font-semibold">
+                                <span class="text-white">${myScore}</span> - <span class="text-gray-400">${oppScore}</span>
+                                <div class="text-[9px] text-gray-500">Dealer ${m.dScore}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function loadRankings() {
+            let db = getDB();
+            let playersArray = Object.keys(db.players).map(name => {
+                let p = db.players[name];
+                let total = p.wins + p.losses + p.draws;
+                return { name, wins: p.wins, total, rate: total > 0 ? (p.wins/total)*100 : 0 };
+            });
+
+            // Wins Ranking
+            let winsRank = [...playersArray].filter(p => p.total > 0).sort((a,b) => b.wins - a.wins).slice(0, 10);
+            let winsBody = document.getElementById('ranking-wins-body');
+            if (winsRank.length === 0) {
+                winsBody.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-gray-500">データなし</td></tr>';
+            } else {
+                winsBody.innerHTML = winsRank.map((r, i) => `
+                    <tr class="hover:bg-white/5">
+                        <td class="py-2 font-bold">${i+1}</td>
+                        <td class="py-2 text-yellow-400 font-semibold">${r.name}</td>
+                        <td class="py-2 font-bold">${r.wins}勝</td>
+                        <td class="py-2 text-emerald-400">${r.rate.toFixed(1)}%</td>
+                    </tr>
+                `).join('');
+            }
+
+            // Rates Ranking (min 3 games)
+            let ratesRank = [...playersArray].filter(p => p.total >= 3).sort((a,b) => b.rate - a.rate || b.wins - a.wins).slice(0, 10);
+            let ratesBody = document.getElementById('ranking-rates-body');
+            if (ratesRank.length === 0) {
+                ratesBody.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-gray-500">データなし</td></tr>';
+            } else {
+                ratesBody.innerHTML = ratesRank.map((r, i) => `
+                    <tr class="hover:bg-white/5">
+                        <td class="py-2 font-bold">${i+1}</td>
+                        <td class="py-2 text-yellow-400 font-semibold">${r.name}</td>
+                        <td class="py-2 text-emerald-400">${r.rate.toFixed(1)}%</td>
+                        <td class="py-2 text-gray-400">${r.total}戦</td>
+                    </tr>
+                `).join('');
+            }
+        }
+    </script>
 </body>
 </html>
