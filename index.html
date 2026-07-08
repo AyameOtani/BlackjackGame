@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLACKJACK ONLINE - LOCAL 2 PLAYER</title>
+    <title>BLACKJACK</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
@@ -91,10 +91,13 @@
 <body class="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
 
     <div class="max-w-4xl w-full casino-table rounded-[2.5rem] p-4 sm:p-8 text-white relative">
+        <button onclick="showRulesModal()" class="absolute top-4 right-4 sm:top-6 sm:right-6 bg-yellow-600/20 hover:bg-yellow-600/40 border border-yellow-500/50 text-yellow-100 font-bold py-1.5 px-3 rounded-full text-xs z-40 transition shadow-lg backdrop-blur-sm flex items-center gap-1">
+            <i class="fa-solid fa-circle-question"></i><span>ルール説明</span>
+        </button>
         
         <div class="text-center mb-4 sm:mb-6">
             <h1 class="text-3xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-amber-400 to-yellow-600 tracking-widest drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]">
-                BLACKJACK ONLINE
+                BLACKJACK
             </h1>
             <p class="text-[10px] text-yellow-500/80 font-semibold uppercase tracking-widest mt-1">LOCAL MULTIPLAYER & AI DEALER</p>
         </div>
@@ -338,7 +341,40 @@
         </button>
     </div>
 
+    <!-- Rules Modal -->
+    <div id="rules-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border-2 border-yellow-600/50 rounded-2xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto text-white shadow-2xl">
+            <div class="flex justify-between items-center mb-4 border-b border-yellow-600/30 pb-2">
+                <h2 class="text-xl font-bold text-yellow-400"><i class="fa-solid fa-book mr-2"></i>ルール説明</h2>
+                <button onclick="closeRulesModal()" class="text-gray-400 hover:text-white transition text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-4 text-sm leading-relaxed text-gray-200">
+                <p><strong>ブラックジャックの目的：</strong><br>ディーラー（AI）よりカードの合計点を21点に近づけることです。ただし21点を超えてはいけません。</p>
+                <div class="bg-black/50 p-3 rounded-lg border border-yellow-600/20">
+                    <h3 class="text-yellow-500 font-bold mb-1"><i class="fa-solid fa-hand-pointer mr-1"></i>ヒット (Hit)</h3>
+                    <p>カードをもう1枚引きます。合計が21を超えると「バスト」となり、負けとなります。</p>
+                </div>
+                <div class="bg-black/50 p-3 rounded-lg border border-yellow-600/20">
+                    <h3 class="text-blue-400 font-bold mb-1"><i class="fa-solid fa-hand mr-1"></i>スタンド (Stand)</h3>
+                    <p>今のカードの合計点で勝負します。これ以上カードは引きません。</p>
+                </div>
+                <p><strong>カードの点数：</strong><br>
+                ・2〜10は数字の通り。<br>
+                ・J, Q, Kは10点。<br>
+                ・Aは1点または11点として有利な方で計算されます。</p>
+                <p><strong>勝敗：</strong><br>
+                21点を超えずにディーラーより点数が高ければ勝ちです。同点の場合は引き分け（プッシュ）となります。</p>
+            </div>
+            <div class="mt-6 text-center">
+                <button onclick="closeRulesModal()" class="px-6 py-2 bg-yellow-600 hover:bg-yellow-500 text-black font-bold rounded-xl transition shadow-lg">閉じる</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        function showRulesModal() { document.getElementById('rules-modal').classList.remove('hidden'); }
+        function closeRulesModal() { document.getElementById('rules-modal').classList.add('hidden'); }
+
         // --- Sound Engine ---
         let audioCtx = null;
         let isMuted = false;
@@ -791,11 +827,31 @@
             }
 
             let resultMsg = 'ゲーム終了！';
+            let p1Name = gameState.player1.name;
+            let p2Name = gameState.player2 ? gameState.player2.name : '';
+
             if (!isOnline) {
-                if (p1Result === 'bj') resultMsg = 'BLACKJACKで勝利！';
+                if (p1Result === 'bj') resultMsg = `${p1Name}がBLACKJACKで勝利！`;
                 else if (p1Result === 'win') resultMsg = 'プレイヤーの勝利！';
-                else if (p1Result === 'lose') resultMsg = 'ディーラーの勝利...';
+                else if (p1Result === 'lose') resultMsg = 'ディーラーの勝利！';
                 else resultMsg = '引き分け (Push)';
+            } else {
+                let winners = [];
+                let bjs = [];
+                if (p1Result === 'win') winners.push(p1Name);
+                if (p1Result === 'bj') bjs.push(p1Name);
+                if (p2Result === 'win') winners.push(p2Name);
+                if (p2Result === 'bj') bjs.push(p2Name);
+
+                if (bjs.length > 0) {
+                    resultMsg = `${bjs.join('と')}がBLACKJACKで勝利！`;
+                } else if (winners.length > 0) {
+                    resultMsg = `${winners.join('と')}の勝利！`;
+                } else if (p1Result === 'lose' && p2Result === 'lose') {
+                    resultMsg = 'ディーラーの勝利！';
+                } else {
+                    resultMsg = '引き分け (Push)';
+                }
             }
 
             updateUI(resultMsg);
