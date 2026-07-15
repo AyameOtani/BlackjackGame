@@ -797,10 +797,14 @@
 
         function localHit() {
             if (gameState.state !== 'GAME_ACTIVE') return;
+            if (gameState.turn !== 'player1' && gameState.turn !== 'player2') return;
+            
+            let activePlayer = gameState.turn === 'player1' ? gameState.player1 : gameState.player2;
+            if (activePlayer.score >= 21) return;
+
             playSound('flip');
             syncState('', 'flip');
             
-            let activePlayer = gameState.turn === 'player1' ? gameState.player1 : gameState.player2;
             activePlayer.hand.push(Object.assign(gameState.deck.pop(), {isNew: true}));
             updateScores();
 
@@ -823,6 +827,10 @@
 
         function localStand() {
             if (gameState.state !== 'GAME_ACTIVE') return;
+            if (gameState.turn !== 'player1' && gameState.turn !== 'player2') return;
+            let activePlayer = gameState.turn === 'player1' ? gameState.player1 : gameState.player2;
+            if (activePlayer.score >= 21) return;
+
             playSound('chip');
             nextTurn();
         }
@@ -982,14 +990,17 @@
                     turnText = 'ディーラーのターン';
                 }
                 
+                let activePlayer = gameState.turn === 'player1' ? gameState.player1 : (gameState.turn === 'player2' ? gameState.player2 : null);
+                let isTransitioning = !activePlayer || activePlayer.score >= 21;
+
                 // If online, disable buttons if it's not our turn
                 if (isOnline) {
                     let isMyTurn = (isHost && gameState.turn === 'player1') || (!isHost && gameState.turn === 'player2');
-                    document.getElementById('hit-btn').disabled = !isMyTurn;
-                    document.getElementById('stand-btn').disabled = !isMyTurn;
+                    document.getElementById('hit-btn').disabled = !isMyTurn || isTransitioning;
+                    document.getElementById('stand-btn').disabled = !isMyTurn || isTransitioning;
                 } else {
-                    document.getElementById('hit-btn').disabled = false;
-                    document.getElementById('stand-btn').disabled = false;
+                    document.getElementById('hit-btn').disabled = isTransitioning || gameState.turn === 'dealer';
+                    document.getElementById('stand-btn').disabled = isTransitioning || gameState.turn === 'dealer';
                 }
                 document.getElementById('rematch-btn').classList.add('hidden');
             } else {
