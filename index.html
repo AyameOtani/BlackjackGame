@@ -640,7 +640,7 @@
                 }
                 
                 if (data.event === 'flip') playSound('flip');
-                if (data.event === 'win') { playSound('win'); confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
+                if (data.event === 'win') { playSound('win'); triggerVictoryEffect(data.msg); }
                 if (data.event === 'lose') playSound('lose');
                 
                 updateUI(data.msg);
@@ -899,18 +899,6 @@
                 saveMatchHistory(gameState.player1, {name: 'Dealer AI', score: dScore, hand: gameState.dealer.hand}, gameState.dealer, p1Result, 'draw');
             }
 
-            let event = '';
-            if (p1Result === 'win' || (isOnline && p2Result === 'win') || p1Result === 'bj' || (isOnline && p2Result === 'bj')) {
-                playSound('win');
-                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-                event = 'win';
-            } else if (p1Result === 'lose' && (!isOnline || p2Result === 'lose')) {
-                playSound('lose');
-                event = 'lose';
-            } else {
-                playSound('chip');
-            }
-
             let resultMsg = 'ゲーム終了！';
             let p1Name = gameState.player1.name;
             let p2Name = gameState.player2 ? gameState.player2.name : '';
@@ -939,8 +927,57 @@
                 }
             }
 
+            let event = '';
+            if (p1Result === 'win' || (isOnline && p2Result === 'win') || p1Result === 'bj' || (isOnline && p2Result === 'bj')) {
+                playSound('win');
+                triggerVictoryEffect(resultMsg);
+                event = 'win';
+            } else if (p1Result === 'lose' && (!isOnline || p2Result === 'lose')) {
+                playSound('lose');
+                event = 'lose';
+            } else {
+                playSound('chip');
+            }
+
             updateUI(resultMsg);
             syncState(resultMsg, event);
+        }
+
+        function triggerVictoryEffect(msg) {
+            let duration = 800;
+            let end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#facc15', '#f59e0b', '#d97706', '#fbbf24']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#facc15', '#f59e0b', '#d97706', '#fbbf24']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+
+            let overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center pointer-events-none bg-black/50 backdrop-blur-sm transition-opacity duration-1000';
+            let displayMsg = msg.includes('BLACKJACK') ? msg.replace('！', '<br>！') : msg;
+            overlay.innerHTML = `<h1 class="text-5xl sm:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-amber-400 to-yellow-600 drop-shadow-[0_0_20px_rgba(251,191,36,0.8)] animate-bounce text-center px-4 leading-tight">${displayMsg}</h1>`;
+            document.body.appendChild(overlay);
+
+            setTimeout(() => {
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.remove(), 1000);
+            }, duration);
         }
 
         function evaluateResult(player, dScore, dBust) {
